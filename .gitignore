@@ -1,1 +1,7 @@
 /bochs.log
+
+# ignore all objects that created will building
+obj/
+
+# ignore overiding 
+/.settings/language.settings.xml
