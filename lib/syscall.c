@@ -34,14 +34,14 @@ syscall(int num, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uint32 a5)
 	return ret;
 }
 
-void
-sys_cputs(const char *s, uint32 len, uint8 printProgName)
+
+void sys_cputs(const char *s, uint32 len, uint8 printProgName)
 {
 	syscall(SYS_cputs, (uint32) s, len, (uint32)printProgName, 0, 0);
 }
 
-int
-sys_cgetc(void)
+
+int sys_cgetc(void)
 {
 	return syscall(SYS_cgetc, 0, 0, 0, 0, 0);
 }
@@ -298,20 +298,26 @@ void sys_utilities(char* utilityName, int value)
 //TODO: [PROJECT'24.MS1 - #02] [2] SYSTEM CALLS - Implement these system calls
 void* sys_sbrk(int increment)
 {
+	 syscall(SYS_Sbrk, increment , 0, 0,0,0);
+
 	//Comment the following line before start coding...
-	panic("not implemented yet");
-	return NULL;
+//	panic("not implemented yet");
+	return (void*)-1 ;
 }
 
 void sys_free_user_mem(uint32 virtual_address, uint32 size)
 {
+	syscall(SYS_Free_User_Mem, virtual_address , size, 0,0,0);
+
 	//Comment the following line before start coding...
-	panic("not implemented yet");
+//	panic("not implemented yet");
 }
 
 void sys_allocate_user_mem(uint32 virtual_address, uint32 size)
 {
+	syscall(SYS_Allocate_User_Mem, virtual_address , size, 0,0,0);
+
 	//Comment the following line before start coding...
-	panic("not implemented yet");
+//	panic("not implemented yet");
 }
 

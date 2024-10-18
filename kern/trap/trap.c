@@ -175,6 +175,7 @@ void idt_init(void)
 	SETGATE(idt[46], 0, GD_KT , &ALL_FAULTS46, 3) ;
 	SETGATE(idt[47], 0, GD_KT , &ALL_FAULTS47, 3) ;
 
+
 	// Load the IDT
 	//asm volatile("lidt idt_pd");
 	lidt(idt, sizeof(idt));
