@@ -12,4 +12,5 @@ _main(void)
 	sys_free_user_mem(0, 10);
 	inctst();
 	panic("tst system calls #2 failed: sys_free_user_mem is called with invalid params\nThe env must be killed and shouldn't return here.");
+
 }
