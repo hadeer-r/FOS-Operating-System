@@ -179,8 +179,22 @@ void *realloc_block_FF(void* va, uint32 new_size)
 {
 	//TODO: [PROJECT'24.MS1 - #08] [3] DYNAMIC ALLOCATOR - realloc_block_FF
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("realloc_block_FF is not implemented yet");
+//	panic("realloc_block_FF is not implemented yet");
 	//Your Code is Here...
+
+	if(va == NULL){
+		if(new_size > 0)
+		{
+			return alloc_block_BF(new_size);
+		}
+		else return NULL;
+	}
+	if(new_size==0){
+		free_block(va);
+		return NULL;
+	}
+
+
 }
 
 /*********************************************************************************************/
