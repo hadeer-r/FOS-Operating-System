@@ -8,7 +8,6 @@
 #include <inc/string.h>
 #include "../inc/dynamic_allocator.h"
 
-
 //==================================================================================//
 //============================== GIVEN FUNCTIONS ===================================//
 //==================================================================================//
@@ -194,7 +193,34 @@ void *realloc_block_FF(void* va, uint32 new_size)
 		return NULL;
 	}
 
+	uint32 old_size = get_block_size(va);
+	if(old_size==new_size)
+		return va;
 
+	void*new_va=NULL;
+	cprintf("this is my address *va :", va);
+	if(new_size>old_size){
+		uint32* check_next_footer =(uint32*)va +1;
+		uint32 = new_size-old_size;
+		if((*check_next_footer) & 0x1){
+			return alloc_block_FF(new_size);
+			free_block(va);
+		}
+		else{
+
+
+
+
+		}
+
+
+	}
+
+	else if (new_size<old_size){
+		if(old_size-new_size<16)
+			return va;
+	}
+	return NULL;
 }
 
 /*********************************************************************************************/
