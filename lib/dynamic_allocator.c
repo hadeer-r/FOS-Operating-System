@@ -198,17 +198,40 @@ void *realloc_block_FF(void* va, uint32 new_size)
 		return va;
 
 	void*new_va=NULL;
-	cprintf("this is my address *va :", va);
+	uint32 diff_size = new_size-old_size;
+
+
 	if(new_size>old_size){
-		uint32* check_next_footer =(uint32*)va +1;
-		uint32 = new_size-old_size;
-		if((*check_next_footer) & 0x1){
-			return alloc_block_FF(new_size);
-			free_block(va);
+
+		uint32* next_block = va+old_size +1;
+
+
+		if((*next_block) & (uint32)1){
+
+			// reallocate, take the content and put it in another block
 		}
+
 		else{
 
+			uint32 next_block_sz = get_block_size(next_block);
+			if(next_block_sz>=diff_size){
+				if(next_block_sz-diff_size <16){
+					va = va + diff_size;
 
+					// is this require to delete footer for next or put address with null?
+					// is this require to delete block from linked list
+
+				}
+				else {
+					va = va + diff_size;
+					// need to edit in free block
+						// edit in node that contain information about linkedlist
+				}
+			}
+
+			else {
+				// re allocate
+			}
 
 
 		}
@@ -219,6 +242,14 @@ void *realloc_block_FF(void* va, uint32 new_size)
 	else if (new_size<old_size){
 		if(old_size-new_size<16)
 			return va;
+
+		else {
+			va = va - diff_size;
+
+			// need to add new free block in memory
+			// calling initialize (new block)
+
+		}
 	}
 	return NULL;
 }
