@@ -5,3 +5,7 @@ obj/
 
 # ignore overiding 
 /.settings/language.settings.xml
+
+
+# vscode
+/.vscode
