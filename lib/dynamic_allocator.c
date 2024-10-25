@@ -102,8 +102,16 @@ void initialize_dynamic_allocator(uint32 daStart, uint32 initSizeOfAllocatedSpac
 
 	//TODO: [PROJECT'24.MS1 - #04] [3] DYNAMIC ALLOCATOR - initialize_dynamic_allocator
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("initialize_dynamic_allocator is not implemented yet");
+	//panic("initialize_dynamic_allocator is not implemented yet");
 	//Your Code is Here...
+	 LIST_INIT(&freeBlocksList);
+	    struct BlockElement *firstBlock;
+	    firstBlock=(struct BlockElement *)daStart;
+	    firstBlock->is_free = 1;
+	    firstBlock->prev_next_info.le_next = NULL;
+	    firstBlock->prev_next_info.le_prev = NULL;
+	    firstBlock->size = initSizeOfAllocatedSpace;
+	    LIST_INSERT_TAIL(&freeBlocksList, firstBlock);
 
 }
 //==================================
@@ -115,6 +123,29 @@ void set_block_data(void* va, uint32 totalSize, bool isAllocated)
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	panic("set_block_data is not implemented yet");
 	//Your Code is Here...
+	// Header: stores the block size and allocation status
+	    struct BlockElement* header = (struct BlockElement*) va;
+	    header->size = totalSize;
+	    if (isAllocated)
+	    {
+	        header->is_free = 0;
+	    }
+	    else
+	    {
+	        header->is_free = 1;
+	    }
+	    void* footer_va = (uint8*)va + totalSize - sizeof(struct BlockElement);
+
+	    struct BlockElement* footer = (struct BlockElement*) footer_va;
+	    footer->size = totalSize;
+	    if (header->is_free == 0)
+	    {
+	        footer->is_free = 0;
+	    }
+	    else
+	    {
+	        footer->is_free = 1;
+	    }
 }
 
 
@@ -173,8 +204,10 @@ void *alloc_block_FF(uint32 size)
 
 		if(!found) sbrk(0);
 
+
 	//Your Code is Here...
 		return NULL;
+
 
 }
 //=========================================
