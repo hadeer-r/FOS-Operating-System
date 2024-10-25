@@ -336,7 +336,7 @@ void *realloc_block_FF(void* va, uint32 new_size)
 		// }
 		struct BlockElement *current_blk;
 		LIST_FOREACH(current_blk,&(freeBlocksList)){
-			if(current_blk==(struct BlockElement)*(next_block+1)){
+			if(current_blk==(struct BlockElement*)(next_block+1)){
 				break;
 			}
 		}
