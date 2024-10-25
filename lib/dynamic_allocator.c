@@ -121,7 +121,7 @@ void set_block_data(void* va, uint32 totalSize, bool isAllocated)
 {
 	//TODO: [PROJECT'24.MS1 - #05] [3] DYNAMIC ALLOCATOR - set_block_data
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("set_block_data is not implemented yet");
+	//panic("set_block_data is not implemented yet");
 	//Your Code is Here...
 	// Header: stores the block size and allocation status
 	    struct BlockElement* header = (struct BlockElement*) va;
@@ -320,6 +320,7 @@ void *realloc_block_FF(void* va, uint32 new_size)
 		return va;
 
 	void*new_va=NULL;
+
 	uint32 diff_size = new_size-old_size;
 
 
@@ -327,53 +328,72 @@ void *realloc_block_FF(void* va, uint32 new_size)
 
 		uint32* next_block = va+old_size +1;
 
+		// struct BlockElement *next_blk;
+		// LIST_FOREACH(next_blk,&(freeBlocksList)){
+		// 	if(next_blk==next_block+1){
+		// 		break;
+		// 	}
+		// }
+		struct BlockElement *current_blk;
+		LIST_FOREACH(current_blk,&(freeBlocksList)){
+			if(current_blk==next_block+1){
+				break;
+			}
+		}
 
-		if((*next_block) & (uint32)1){
+		struct BlockElement *next_blk = LIST_NEXT(current_blk);
 
-			// reallocate, take the content and put it in another block
+		
+
+		if(next_blk->is_free){
+			if(next_blk->size==diff_size ){
+				// 1. remove next_blk from list
+				LIST_REMOVE(&(freeBlocksList), next_blk);
+
+				set_block_data(va,new_size,1);
+				return va;
+				
+
+			}
+			else if(next_blk->size>diff_size){
+
+				if(next_blk->size-diff_size<16){
+					set_block_data(va,current_blk->size+next_blk->size,1);
+				}
+				else {
+					set_block_data(va+new_size+1,next_blk->size-diff_size,0);
+					set_block_data(va,new_size,1);
+				}
+				return va;
+			}
+			else {
+				uint32* new_add= alloc_block_FF(new_size);
+				free_block(va);
+				return new_add
+
+			}
+			
+
 		}
 
 		else{
-
-			uint32 next_block_sz = get_block_size(next_block);
-			if(next_block_sz>=diff_size){
-				if(next_block_sz-diff_size <16){
-					va = va + diff_size;
-
-					// is this require to delete footer for next or put address with null?
-					// is this require to delete block from linked list
-
-				}
-				else {
-					va = va + diff_size;
-					// need to edit in free block
-						// edit in node that contain information about linkedlist
-				}
-			}
-
-			else {
-				// re allocate
-			}
-
-
+			uint32* new_add= alloc_block_FF(new_size);
+				free_block(va);
+				return new_add
 		}
 
 
 	}
 
-	else if (new_size<old_size){
-		if(old_size-new_size<16)
-			return va;
+	// last condition is that new_size < old_size
 
-		else {
-			va = va - diff_size;
-
-			// need to add new free block in memory
-			// calling initialize (new block)
-
-		}
-	}
-	return NULL;
+	if(old_size-new_size<16)
+	return va;
+	
+	set_block_data(va,new_size,1);
+	set_block_data(va+new_size+1,old_size-new_size,0);
+	
+	return va;
 }
 
 /*********************************************************************************************/
