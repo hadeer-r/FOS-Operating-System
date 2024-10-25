@@ -21,18 +21,26 @@ void init_channel(struct Channel *chan, char *name)
 }
 
 //===============================
+//===============================
 // 2) SLEEP ON A GIVEN CHANNEL:
 //===============================
 // Atomically release lock and sleep on chan.
 // Reacquires lock when awakened.
 // Ref: xv6-x86 OS code
+
 void sleep(struct Channel *chan, struct spinlock* lk)
 {
-	//TODO: [PROJECT'24.MS1 - #10] [4] LOCKS - sleep
-	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("sleep is not implemented yet");
-	//Your Code is Here...
+    //TODO: [PROJECT'24.MS1 - #10] [4] LOCKS - sleep
+    //COMMENT THE FOLLOWING LINE BEFORE START CODING
+    //panic("sleep is not implemented yet");
+    //Your Code is Here...
+    release_spinlock(lk);
+    struct Env*cp = get_cpu_proc();
+    enqueue(&(chan->queue),cp);
 
+    cp->env_status=3;
+
+    acquire_spinlock(lk);
 }
 
 //==================================================
@@ -44,10 +52,14 @@ void sleep(struct Channel *chan, struct spinlock* lk)
 // chan MUST be of type "struct Env_Queue" to hold the blocked processes
 void wakeup_one(struct Channel *chan)
 {
-	//TODO: [PROJECT'24.MS1 - #11] [4] LOCKS - wakeup_one
-	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("wakeup_one is not implemented yet");
-	//Your Code is Here...
+    //TODO: [PROJECT'24.MS1 - #11] [4] LOCKS - wakeup_one
+    //COMMENT THE FOLLOWING LINE BEFORE START CODING
+    //panic("wakeup_one is not implemented yet");
+    //Your Code is Here...
+    struct Env* wake_process;
+    wake_process=dequeue(&chan->queue);
+    wake_process->env_status=2;
+
 }
 
 //====================================================
@@ -60,10 +72,15 @@ void wakeup_one(struct Channel *chan)
 
 void wakeup_all(struct Channel *chan)
 {
-	//TODO: [PROJECT'24.MS1 - #12] [4] LOCKS - wakeup_all
-	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("wakeup_all is not implemented yet");
-	//Your Code is Here...
+    //TODO: [PROJECT'24.MS1 - #12] [4] LOCKS - wakeup_all
+    //COMMENT THE FOLLOWING LINE BEFORE START CODING
+    //panic("wakeup_all is not implemented yet");
+    //Your Code is Here...
+    struct Env* wake_process;
+    while(queue_size(&chan->queue)!=0){
+        wake_process=dequeue(&chan->queue);
+        wake_process->env_status=2;
+    }
 
 }
 
