@@ -143,8 +143,38 @@ void *alloc_block_FF(uint32 size)
 
 	//TODO: [PROJECT'24.MS1 - #06] [3] DYNAMIC ALLOCATOR - alloc_block_FF
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("alloc_block_FF is not implemented yet");
+	//panic("alloc_block_FF is not implemented yet");
+
+	struct BlockElement *blk;
+        bool found=0;
+		LIST_FOREACH (blk,&(freeBlocksList)){
+			if(!is_free_block(blk)) continue;
+
+			if((get_block_size(blk)>size)){
+
+			if(get_block_size(blk)>=size+4*sizeof(int))
+			{
+				set_block_data(blk,size,1);
+				int rem=get_block_size(blk)-size;
+				struct BlockElement* new_address=blk+size;
+				set_block_data(new_address,rem,0);
+
+			}
+			else  set_block_data(blk,get_block_size(blk),1);
+
+				found=1;
+				break;
+
+
+			}
+
+
+		}
+
+		if(!found) sbrk(0);
+
 	//Your Code is Here...
+		return NULL;
 
 }
 //=========================================
@@ -156,6 +186,65 @@ void *alloc_block_BF(uint32 size)
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	panic("alloc_block_BF is not implemented yet");
 	//Your Code is Here...
+
+
+	//==================================================================================
+	//DON'T CHANGE THESE LINES==========================================================
+	//==================================================================================
+	{
+	if (size % 2 != 0) size++;//ensure that the size is even (to use LSB as allocation flag)
+	if (size < DYN_ALLOC_MIN_BLOCK_SIZE)
+	size = DYN_ALLOC_MIN_BLOCK_SIZE ;
+	if (!is_initialized)
+	{
+	uint32 required_size = size + 2*sizeof(int) /*header & footer*/ + 2*sizeof(int) /*da begin & end*/ ;
+	uint32 da_start = (uint32)sbrk(ROUNDUP(required_size, PAGE_SIZE)/PAGE_SIZE);
+	uint32 da_break = (uint32)sbrk(0);
+	initialize_dynamic_allocator(da_start, da_break - da_start);
+	}
+	//==================================================================================
+	//==================================================================================
+
+	//TODO: [PROJECT'24.MS1 - #06] [3] DYNAMIC ALLOCATOR - alloc_block_FF
+	//COMMENT THE FOLLOWING LINE BEFORE START CODING
+	//panic("alloc_block_FF is not implemented yet");
+
+	struct BlockElement *blk,*address;
+	        int best_size=-1;
+	                bool found=0;
+	LIST_FOREACH (blk,&(freeBlocksList)){
+	if(!is_free_block(blk)) continue;
+	found=1;
+	int sz=get_block_size(blk);
+	if(sz>=size){
+	      if(sz<best_size||best_size==-1)
+	         {
+	               address=blk;
+	                best_size=sz;
+	          }
+
+	}
+
+
+	}
+
+	if(!found) sbrk(0);
+	else
+	{
+	        if(best_size>=size+4*sizeof(int))
+	        {
+	           set_block_data(address,size,1);
+	           int rem=best_size-size;
+	            struct BlockElement* new_address=address+size;
+	           set_block_data(new_address,rem,0);
+
+	          }
+	        else  set_block_data(address,best_size,1);
+	}
+
+	//Your Code is Here...
+
+	}
 
 
 }
