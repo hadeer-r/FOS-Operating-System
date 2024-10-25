@@ -147,32 +147,42 @@ void *alloc_block_FF(uint32 size)
 	//panic("alloc_block_FF is not implemented yet");
 
 	struct BlockElement *blk;
-        bool found=0;
+        bool case1=0,case2=0;
 		LIST_FOREACH (blk,&(freeBlocksList)){
-			if(!is_free_block(blk)) continue;
 
 			if((get_block_size(blk)>size)){
 
 			if(get_block_size(blk)>=size+4*sizeof(int))
 			{
 				set_block_data(blk,size,1);
-				int rem=get_block_size(blk)-size;
-				struct BlockElement* new_address=blk+size;
-				set_block_data(new_address,rem,0);
+				case1=1;
 
 			}
 			else  set_block_data(blk,get_block_size(blk),1);
 
-				found=1;
+			case2=1;
 				break;
-
-
 			}
 
 
 		}
 
-		if(!found) sbrk(0);
+		if(!case1&&!case2) sbrk(0);
+		else
+		{
+
+			struct BlockElement* prev_address= LIST_PREV(blk); // it may have no previous one?
+			LIST_REMOVE(freeBlocksList,blk);
+
+			if(case1)
+			{
+				int rem=get_block_size(blk)-size;
+				struct BlockElement* new_address=blk+size;
+			    set_block_data(new_address,rem,0); // need to insert
+			    LIST_INSERT_AFTER(freeBlocksList, prev_address, new_address);
+
+			}
+		}
 
 	//Your Code is Here...
 
@@ -210,10 +220,9 @@ void *alloc_block_BF(uint32 size)
 
 	struct BlockElement *blk,*address;
 	        int best_size=-1;
-	                bool found=0;
+	          bool found=0;
 	LIST_FOREACH (blk,&(freeBlocksList)){
-	if(!is_free_block(blk)) continue;
-	found=1;
+
 	int sz=get_block_size(blk);
 	if(sz>=size){
 	      if(sz<best_size||best_size==-1)
@@ -221,24 +230,30 @@ void *alloc_block_BF(uint32 size)
 	               address=blk;
 	                best_size=sz;
 	          }
+	      found=1;
 
 	}
-
 
 	}
 
 	if(!found) sbrk(0);
 	else
 	{
+
 	        if(best_size>=size+4*sizeof(int))
 	        {
 	           set_block_data(address,size,1);
 	           int rem=best_size-size;
-	            struct BlockElement* new_address=address+size;
+	           struct BlockElement* new_address=address+size;
 	           set_block_data(new_address,rem,0);
+	           struct BlockElement* prev_address= LIST_PREV(address); // it may have no previous one?
+	           LIST_INSERT_AFTER(freeBlocksList, prev_address, new_address);
 
 	          }
 	        else  set_block_data(address,best_size,1);
+
+	        LIST_REMOVE(freeBlocksList,address);
+
 	}
 
 	//Your Code is Here...
@@ -254,7 +269,7 @@ void free_block(void *va)
 {
 	//TODO: [PROJECT'24.MS1 - #07] [3] DYNAMIC ALLOCATOR - free_block
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("free_block is not implemented yet");
+	//panic("free_block is not implemented yet");
 	//Your Code is Here...
 }
 
