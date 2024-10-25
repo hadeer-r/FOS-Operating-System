@@ -29,6 +29,8 @@ enum
 //TODO: [PROJECT'24.MS1 - #00 GIVENS] [3] DYNAMIC ALLOCATOR - data structures
 struct BlockElement
 {
+	uint32 size;		//block size (including size of its meta data)
+	uint8 is_free;		//is_free block?
 	LIST_ENTRY(BlockElement) prev_next_info;	/* linked list links */
 };// __attribute__((packed))
 
