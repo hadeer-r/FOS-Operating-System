@@ -21,7 +21,6 @@ __inline__ uint32 get_block_size(void* va)
 	uint32 *curBlkMetaData = ((uint32 *)va - 1) ;
 	return (*curBlkMetaData) & ~(0x1);
 }
-
 //===========================
 // 2) GET BLOCK STATUS:
 //===========================
@@ -98,6 +97,7 @@ void initialize_dynamic_allocator(uint32 daStart, uint32 initSizeOfAllocatedSpac
 			return ;
 		is_initialized = 1;
 	}
+
 	//==================================================================================
 	//==================================================================================
 
@@ -149,7 +149,6 @@ void *alloc_block_FF(uint32 size)
 	struct BlockElement *blk;
         bool case1=0,case2=0;
 		LIST_FOREACH (blk,&(freeBlocksList)){
-
 			if((get_block_size(blk)>size)){
 
 			if(get_block_size(blk)>=size+4*sizeof(int))
@@ -171,17 +170,18 @@ void *alloc_block_FF(uint32 size)
 		else
 		{
 
-			struct BlockElement* prev_address= LIST_PREV(blk); // it may have no previous one?
-			LIST_REMOVE(freeBlocksList,blk);
+			struct BlockElement* prev_address= LIST_PREV(blk);
+			// it may have no previous one?, i am the begin?
 
 			if(case1)
 			{
 				int rem=get_block_size(blk)-size;
 				struct BlockElement* new_address=blk+size;
 			    set_block_data(new_address,rem,0); // need to insert
-			    LIST_INSERT_AFTER(freeBlocksList, prev_address, new_address);
+			    LIST_INSERT_AFTER(&freeBlocksList, prev_address, new_address);
 
 			}
+			LIST_REMOVE(&freeBlocksList,blk);
 		}
 
 	//Your Code is Here...
@@ -247,12 +247,12 @@ void *alloc_block_BF(uint32 size)
 	           struct BlockElement* new_address=address+size;
 	           set_block_data(new_address,rem,0);
 	           struct BlockElement* prev_address= LIST_PREV(address); // it may have no previous one?
-	           LIST_INSERT_AFTER(freeBlocksList, prev_address, new_address);
+	           LIST_INSERT_AFTER(&freeBlocksList, prev_address, new_address);
 
 	          }
 	        else  set_block_data(address,best_size,1);
 
-	        LIST_REMOVE(freeBlocksList,address);
+	        LIST_REMOVE(&freeBlocksList,address);
 
 	}
 
@@ -271,6 +271,33 @@ void free_block(void *va)
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	//panic("free_block is not implemented yet");
 	//Your Code is Here...
+
+	// is the address may be not here , not belong to the heap?!
+	set_block_data( va, get_block_size(va), 0);
+	// to put it sorted , you have three cases
+
+	struct BlockElement * first_el= LIST_FIRST(&freeBlocksList);
+	struct BlockElement * last_el= LIST_LAST(&freeBlocksList);
+	if ((struct BlockElement *)va<first_el)  LIST_INSERT_HEAD(&freeBlocksList, (struct BlockElement*)(va));
+	else if((struct BlockElement *)va>last_el) LIST_INSERT_TAIL(&freeBlocksList, (struct BlockElement *)va);
+	else
+	{
+		int sz=LIST_SIZE(freeBlocksList);
+		struct BlockElement *it= first_el;
+		for(int i=0;i<sz;i++)
+		{
+			if(it<(struct BlockElement *)va)
+			{
+				LIST_INSERT_AFTER(&freeBlocksList, it,(struct BlockElement *)va);
+
+				break;
+			}
+			it++;
+		}
+
+
+	}
+
 }
 
 //=========================================
