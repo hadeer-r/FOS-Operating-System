@@ -332,46 +332,90 @@ void free_block(void *va)
 		p=LIST_PREV((struct BlockElement *) va);
         n=LIST_NEXT((struct BlockElement *) va);
 		nxt=(struct BlockElement*)((char *)va+get_block_size(va));
+		prev = (struct BlockElement*)((char *)va-get_block_size(p)-2*sizeof(uint32));
+
 
 	uint32 new_sz=0;
+
+	if (p&&n&&( !*((uint32*)(prev)) & (uint32)1 ) && ( !*((uint32*)(prev)) & (uint32)1 )){
+		new_sz= get_block_size(nxt)+get_block_size(p)+get_block_size(va);
+		    	 LIST_REMOVE(&freeBlocksList,nxt);
+		    	 LIST_REMOVE(&freeBlocksList,(struct BlockElement*)va);
+		    	 set_block_data(p,new_sz,0);
+		    	 cprintf("Size1 :%d",new_sz,"\n");
+		    	 return;
+	}
+	if(p&& !*((uint32*)(prev)) & (uint32)1 ){
+		new_sz= get_block_size(p)+get_block_size(va);
+		    	 LIST_REMOVE(&freeBlocksList,(struct BlockElement *)va);
+		    	 set_block_data(p,new_sz,0);
+		    	 cprintf("Size2 :%d",new_sz,"\n");
+		    	 return;
+	}
+	if(n&& !*((uint32*)(prev)) & (uint32)1 ){
+   	 new_sz= get_block_size(nxt)+get_block_size(va);
+   	 LIST_REMOVE(&freeBlocksList,nxt);
+   	 set_block_data(va,new_sz,0);
+
+   	 cprintf("Size3 :%d",new_sz,"\n");
+   	 return;
+	}
+
+
+
+
 //	cprintf("a1\n");
 //	cprintf("%p\n",p);
-     if(n>=(struct BlockElement*)KERNEL_HEAP_START&&p>=(struct BlockElement*)KERNEL_HEAP_START&&(struct BlockElement*)va==(struct BlockElement*)((char *)p+get_block_size(p)) &&nxt==n)
-     {
-//    	 cprintf("3\n");
-    	 new_sz= get_block_size(nxt)+get_block_size(p)+get_block_size(va);
-    	 LIST_REMOVE(&freeBlocksList,(struct BlockElement *)va);
-    	 LIST_REMOVE(&freeBlocksList,nxt);
-    	 set_block_data(p,new_sz,0);
-    	 return;
-     }
+//     if(n>=(struct BlockElement*)KERNEL_HEAP_START&&p>=(struct BlockElement*)KERNEL_HEAP_START&&prev==p &&nxt==n)
+//     {
+//    	 cprintf("prev and next\n");
+////    	 cprintf("3\n");
+//    	 new_sz= get_block_size(nxt)+get_block_size(p)+get_block_size(va);
+//    	 LIST_REMOVE(&freeBlocksList,nxt);
+//    	 LIST_REMOVE(&freeBlocksList,(struct BlockElement*)va);
+//    	 set_block_data(p,new_sz,0);
+//    	 cprintf("Size1 :%d",new_sz,"\n");
+//    	 return;
+//     }
 //     cprintf("a2\n");
-     if(p>=(struct BlockElement*)KERNEL_HEAP_START&&(struct BlockElement*)va==(struct BlockElement*)((char *)p+get_block_size(p)))
-     {
-//    	 cprintf("4\n");
-    	 new_sz= get_block_size(p)+get_block_size(va);
-    	 LIST_REMOVE(&freeBlocksList,(struct BlockElement *)va);
-    	 set_block_data(p,new_sz,0);
-    	 return;
-     }
+//     if(p>=(struct BlockElement*)KERNEL_HEAP_START&&prev==p)
+//     {
+////    	 cprintf("4\n");
+//    	 new_sz= get_block_size(p)+get_block_size(va);
+//    	 LIST_REMOVE(&freeBlocksList,(struct BlockElement *)va);
+//    	 set_block_data(p,new_sz,0);
+//    	 cprintf("Size2 :%d",new_sz,"\n");
+//    	 return;
+//     }
 //     cprintf("a3\n");
-     if(n>=(struct BlockElement*)KERNEL_HEAP_START&&nxt==n)
-     {
-//    	 cprintf("5\n");
-    	 new_sz= get_block_size(nxt)+get_block_size(va);
-
-    	 LIST_REMOVE(&freeBlocksList,(struct BlockElement *)va);
-    	 LIST_INSERT_BEFORE(&freeBlocksList, nxt,(struct BlockElement *)va);
-    	 set_block_data(va,new_sz,0);
-    	 LIST_INSERT_BEFORE(&freeBlocksList, nxt,(struct BlockElement *)va);
-    	 LIST_REMOVE(&freeBlocksList,nxt);
-    	 return;
-     }
+//     if(n>=(struct BlockElement*)KERNEL_HEAP_START&&nxt==n)
+//     {
+////    	 cprintf("5\n");
+//    	 new_sz= get_block_size(nxt)+get_block_size(va);
+//    	 LIST_REMOVE(&freeBlocksList,nxt);
+//    	 set_block_data(va,new_sz,0);
+//
+//    	 cprintf("Size3 :%d",new_sz,"\n");
+//    	 return;
+//     }
 //     cprintf("a4\n");
 //    	 cprintf("6\n");
     	 new_sz=get_block_size(va);
     	 set_block_data(va,new_sz,0);
+//    	 cprintf("Size4 va :%d",new_sz);
+//    	 cprintf("\n");
+//    	 if(p)
+//    	 {
+//    		 cprintf("Size4 PREV (p) :%d",get_block_size(p));
+//    		 cprintf("Size4 PREV (prev) :%d",get_block_size(prev));
+//    		 cprintf("\n");
+//    	 }
+//    	 if(n){
+//    		 cprintf("Size4 NEX :%d",get_block_size(n));
+//    		 cprintf("Size4 NEX :%d",get_block_size(nxt));
+//        	 cprintf("\n");
 
+//    	 }
 
      return;
 
@@ -400,7 +444,7 @@ void *realloc_block_FF(void* va, uint32 new_size)
 	}
 
 	uint32 old_size = get_block_size(va);
-	if(old_size==new_size)
+	if(old_size==new_size+4)
 		return va;
 
 	void*new_va=NULL;
