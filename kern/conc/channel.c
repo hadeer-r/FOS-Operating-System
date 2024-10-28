@@ -36,14 +36,13 @@ void sleep(struct Channel *chan, struct spinlock* lk)
 	//acquire_spinlock(lk);
     struct Env* cp = get_cpu_proc();
     enqueue(&chan->queue,cp);
-    cp->env_status='3';
+    cp->env_status='3'; //ENV_BLOCKED
     release_spinlock(lk);
-    acquire_spinlock(&ProcessQueues.qlock);
+    acquire_spinlock(&ProcessQueues.qlock); //to protect ANY process queue
     //acquire_spinlock(lk);
     sched();
-    //if(!holding_spinlock(lk)){
     release_spinlock(&ProcessQueues.qlock);
-        acquire_spinlock(lk);}
+    acquire_spinlock(lk);}
 
 //==================================================
 // 3) WAKEUP ONE BLOCKED PROCESS ON A GIVEN CHANNEL:
@@ -63,7 +62,7 @@ void wakeup_one(struct Channel *chan)
     if(queue_size(&chan->queue)!=0){
     wake_process=dequeue(&chan->queue);
     if(wake_process !=NULL){
-    wake_process->env_status='2';
+    wake_process->env_status='2';//ENV_RUNNING
     sched_insert_ready0(wake_process);
     }}
     release_spinlock(&ProcessQueues.qlock);
@@ -91,7 +90,7 @@ void wakeup_all(struct Channel *chan)
         wake_process=dequeue(&chan->queue);
 
     if(wake_process !=NULL){
-    wake_process->env_status='2';
+    wake_process->env_status='2';//ENV_RUNNING
     sched_insert_ready0(wake_process);}
 
 

@@ -38,10 +38,7 @@ void acquire_sleeplock(struct sleeplock *lk)
     bool key=1;
     acquire_spinlock(&(lk->lk));
     while(lk->locked==key){
-    	//release_spinlock(&(lk->lk));
         sleep(&lk->chan,&lk->lk);
-        //acquire_spinlock(&(lk->lk));
-
     }
     lk->locked=key;
     lk->pid = get_cpu_proc()->env_id;
