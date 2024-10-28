@@ -22,11 +22,13 @@ void init_channel(struct Channel *chan, char *name)
 }
 
 //===============================
+//===============================
 // 2) SLEEP ON A GIVEN CHANNEL:
 //===============================
 // Atomically release lock and sleep on chan.
 // Reacquires lock when awakened.
 // Ref: xv6-x86 OS code
+
 void sleep(struct Channel *chan, struct spinlock* lk)
 {
     //TODO: [PROJECT'24.MS1 - #10] [4] LOCKS - sleep
@@ -42,7 +44,9 @@ void sleep(struct Channel *chan, struct spinlock* lk)
     //acquire_spinlock(lk);
     sched();
     release_spinlock(&ProcessQueues.qlock);
-    acquire_spinlock(lk);}
+    acquire_spinlock(lk);
+
+}
 
 //==================================================
 // 3) WAKEUP ONE BLOCKED PROCESS ON A GIVEN CHANNEL:
@@ -83,6 +87,7 @@ void wakeup_all(struct Channel *chan)
     //COMMENT THE FOLLOWING LINE BEFORE START CODING
     //panic("wakeup_all is not implemented yet");
     //Your Code is Here...
+
 
     struct Env* wake_process;
     acquire_spinlock(&ProcessQueues.qlock);
