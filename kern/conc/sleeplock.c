@@ -62,8 +62,3 @@ void release_sleeplock(struct sleeplock *lk)
     release_spinlock(&(lk->lk));
 
 }
-
-
-
-
-
