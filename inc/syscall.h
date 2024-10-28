@@ -47,9 +47,12 @@ enum
 	SYS_check_LRU_lists_free,
 	SYS_check_WS_list,
 	SYS_utilities,
+
 	/*2024*/
 	//TODO: [PROJECT'24.MS1 - #02] [2] SYSTEM CALLS - Add suitable code here
-
+    SYS_Sbrk,
+	SYS_Free_User_Mem,
+	SYS_Allocate_User_Mem,
 	//=====================================================================
 	NSYSCALLS
 };
