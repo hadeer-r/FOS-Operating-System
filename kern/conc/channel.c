@@ -33,14 +33,17 @@ void sleep(struct Channel *chan, struct spinlock* lk)
     //COMMENT THE FOLLOWING LINE BEFORE START CODING
     //panic("sleep is not implemented yet");
     //Your Code is Here...
-	acquire_spinlock(lk);
+	//acquire_spinlock(lk);
     struct Env* cp = get_cpu_proc();
     enqueue(&chan->queue,cp);
-    cp->env_status=3;
+    cp->env_status='3';
     release_spinlock(lk);
-    void sched();
-    acquire_spinlock(lk);
-}
+    acquire_spinlock(&ProcessQueues.qlock);
+    //acquire_spinlock(lk);
+    sched();
+    //if(!holding_spinlock(lk)){
+    release_spinlock(&ProcessQueues.qlock);
+        acquire_spinlock(lk);}
 
 //==================================================
 // 3) WAKEUP ONE BLOCKED PROCESS ON A GIVEN CHANNEL:
@@ -56,9 +59,14 @@ void wakeup_one(struct Channel *chan)
     //panic("wakeup_one is not implemented yet");
     //Your Code is Here...
     struct Env* wake_process;
+    acquire_spinlock(&ProcessQueues.qlock);
+    if(queue_size(&chan->queue)!=0){
     wake_process=dequeue(&chan->queue);
-    wake_process->env_status=1;
-    void sched_insert_ready0(struct Env* wake_process);
+    if(wake_process !=NULL){
+    wake_process->env_status='2';
+    sched_insert_ready0(wake_process);
+    }}
+    release_spinlock(&ProcessQueues.qlock);
 
 }
 
@@ -76,12 +84,17 @@ void wakeup_all(struct Channel *chan)
     //COMMENT THE FOLLOWING LINE BEFORE START CODING
     //panic("wakeup_all is not implemented yet");
     //Your Code is Here...
+
     struct Env* wake_process;
+    acquire_spinlock(&ProcessQueues.qlock);
     while(queue_size(&chan->queue)!=0){
         wake_process=dequeue(&chan->queue);
-        wake_process->env_status=1;
-        void sched_insert_ready0(struct Env* wake_process);
+
+    if(wake_process !=NULL){
+    wake_process->env_status='2';
+    sched_insert_ready0(wake_process);}
+
 
     }
-
+    release_spinlock(&ProcessQueues.qlock);
 }
