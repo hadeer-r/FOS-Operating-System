@@ -38,12 +38,14 @@ void acquire_sleeplock(struct sleeplock *lk)
     bool key=1;
     acquire_spinlock(&(lk->lk));
     while(lk->locked==key){
+    	//release_spinlock(&(lk->lk));
         sleep(&lk->chan,&lk->lk);
+        //acquire_spinlock(&(lk->lk));
 
     }
     lk->locked=key;
     lk->pid = get_cpu_proc()->env_id;
-    release_spinlock(&lk->lk);
+    release_spinlock(&(lk->lk));
 }
 
 void release_sleeplock(struct sleeplock *lk)
@@ -52,9 +54,9 @@ void release_sleeplock(struct sleeplock *lk)
     //COMMENT THE FOLLOWING LINE BEFORE START CODING
     //panic("release_sleeplock is not implemented yet");
     //Your Code is Here...
-    acquire_spinlock(&lk->lk);
-    int wait_queue=queue_size(&lk->chan.queue);
-      if(wait_queue!=0){
+    acquire_spinlock(&(lk->lk));
+    //int wait_queue=queue_size(&lk->chan.queue);
+      if(lk->locked){
         lk->locked=0;
         lk->pid=0;
         wakeup_all(&lk->chan);
@@ -63,8 +65,3 @@ void release_sleeplock(struct sleeplock *lk)
     release_spinlock(&(lk->lk));
 
 }
-
-
-
-
-
