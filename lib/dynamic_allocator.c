@@ -277,26 +277,22 @@ void *alloc_block_BF(uint32 size)
 		return sbrk(size);
 
 		}
-	else
-	{
 
-	        if(best_size>=size+(uint32)16)
-	        {
-	           uint32 rem=best_size-size;
-	           struct BlockElement* new_address=(struct BlockElement*)((char *)address+size);
-	           set_block_data(address,size,1);
-	           set_block_data(new_address,rem,0);
-	           LIST_INSERT_AFTER(&freeBlocksList,address, new_address);
-	          }
-	        else  set_block_data(address,best_size,1);
+    if(best_size>=size+(uint32)16)
+    {
+       uint32 rem=best_size-size;
+       struct BlockElement* new_address=(struct BlockElement*)((char *)address+size);
+       set_block_data(address,size,1);
+       set_block_data(new_address,rem,0);
+       LIST_INSERT_AFTER(&freeBlocksList,address, new_address);
+      }
+    else  set_block_data(address,best_size,1);
 
-	        LIST_REMOVE(&freeBlocksList,address);
-	        return address;
-	}
+    LIST_REMOVE(&freeBlocksList,address);
+    return address;
 
-	//Your Code is Here...
-	return NULL;
-	}
+
+}
 
 //===================================================
 // [5] FREE BLOCK WITH COALESCING:
@@ -310,25 +306,27 @@ void free_block(void *va)
 	//Your Code is Here...
 
 	// is the address may be not here , not belong to the heap?!
-	set_block_data( va, get_block_size(va), 0);
+//	set_block_data( va, get_block_size(va), 0);
 	// to put it sorted , you have three cases
 
 	//struct BlockElement* new_address= (struct BlockElement*)((char *)blk+size);
-
+//		cprintf("1\n");
 		uint32 sz=LIST_SIZE(&freeBlocksList);
 		struct BlockElement * it= LIST_FIRST(&freeBlocksList);
-
+		bool found=0;
 		for(int i=0;i<sz;i++)
 		{
 			if(it>(struct BlockElement *)va)
 			{
 				LIST_INSERT_BEFORE(&freeBlocksList, it,(struct BlockElement *)va);
-
+				found=1;
 				break;
 			}
-			if(i==sz-1) LIST_INSERT_TAIL(&freeBlocksList,(struct BlockElement *) va);
+
 			it++;
 		}
+		if(!found) LIST_INSERT_TAIL(&freeBlocksList,(struct BlockElement *) va);
+//		cprintf("2\n");
 		struct BlockElement*prev=NULL,*nxt=NULL; // prev foot ,nxt head
 		struct BlockElement*p,*n;
 		p=LIST_PREV((struct BlockElement *) va);
@@ -336,25 +334,44 @@ void free_block(void *va)
 		nxt=(struct BlockElement*)((char *)va+get_block_size(va));
 
 	uint32 new_sz=0;
-     if(n!=NULL&&p!=NULL&&(struct BlockElement*)va==(struct BlockElement*)((char *)p+get_block_size(p)) &&nxt==n)
+//	cprintf("a1\n");
+//	cprintf("%p\n",p);
+     if(n>=(struct BlockElement*)KERNEL_HEAP_START&&p>=(struct BlockElement*)KERNEL_HEAP_START&&(struct BlockElement*)va==(struct BlockElement*)((char *)p+get_block_size(p)) &&nxt==n)
      {
+//    	 cprintf("3\n");
     	 new_sz= get_block_size(nxt)+get_block_size(p)+get_block_size(va);
     	 LIST_REMOVE(&freeBlocksList,(struct BlockElement *)va);
     	 LIST_REMOVE(&freeBlocksList,nxt);
     	 set_block_data(p,new_sz,0);
+    	 return;
      }
-     else if(p!=NULL&&(struct BlockElement*)va==(struct BlockElement*)((char *)p+get_block_size(p)))
+//     cprintf("a2\n");
+     if(p>=(struct BlockElement*)KERNEL_HEAP_START&&(struct BlockElement*)va==(struct BlockElement*)((char *)p+get_block_size(p)))
      {
+//    	 cprintf("4\n");
     	 new_sz= get_block_size(p)+get_block_size(va);
     	 LIST_REMOVE(&freeBlocksList,(struct BlockElement *)va);
     	 set_block_data(p,new_sz,0);
+    	 return;
      }
-     else if(n!=NULL&&nxt==n)
+//     cprintf("a3\n");
+     if(n>=(struct BlockElement*)KERNEL_HEAP_START&&nxt==n)
      {
+//    	 cprintf("5\n");
     	 new_sz= get_block_size(nxt)+get_block_size(va);
-    	 LIST_REMOVE(&freeBlocksList,nxt);
+
+    	 LIST_REMOVE(&freeBlocksList,(struct BlockElement *)va);
+    	 LIST_INSERT_BEFORE(&freeBlocksList, nxt,(struct BlockElement *)va);
     	 set_block_data(va,new_sz,0);
+    	 LIST_INSERT_BEFORE(&freeBlocksList, nxt,(struct BlockElement *)va);
+    	 LIST_REMOVE(&freeBlocksList,nxt);
+    	 return;
      }
+//     cprintf("a4\n");
+//    	 cprintf("6\n");
+    	 new_sz=get_block_size(va);
+    	 set_block_data(va,new_sz,0);
+
 
      return;
 
@@ -373,7 +390,7 @@ void *realloc_block_FF(void* va, uint32 new_size)
 	if(va == NULL){
 		if(new_size > 0)
 		{
-			return alloc_block_BF(new_size);
+			return alloc_block_FF(new_size);
 		}
 		else return NULL;
 	}
