@@ -177,24 +177,24 @@ void *alloc_block_FF(uint32 size)
 				if((get_block_size((void*)blk)>=size)){
 
 					//
-				if(get_block_size((void*)blk) >size+(uint32)8 ) // what is minimum block size?
-				{
-					//
-					uint32 rem=get_block_size((void*)blk)-size;
-					set_block_data(blk,size,1);
-					struct BlockElement* new_address= (struct BlockElement*)((char *)blk+size);
-					set_block_data(new_address,rem,0);
-					LIST_INSERT_AFTER(&freeBlocksList, blk, new_address);
+					if(get_block_size((void*)blk) >size+(uint32)16 ) // what is minimum block size?
+					{
+						//
+						uint32 rem=get_block_size((void*)blk)-size;
+						set_block_data(blk,size,1);
+						struct BlockElement* new_address= (struct BlockElement*)((char *)blk+size);
+						set_block_data(new_address,rem,0);
+						LIST_INSERT_AFTER(&freeBlocksList, blk, new_address);
 
-					//
-					case1=1;
+						//
+						case1=1;
 
-				}
-				else
-				{
-					set_block_data(blk,get_block_size((void*)blk),1);
-					case2=1;
-				}
+					}
+					else
+					{
+						set_block_data(blk,get_block_size((void*)blk),1);
+						case2=1;
+					}
 
 				      break;
 				}
@@ -204,22 +204,14 @@ void *alloc_block_FF(uint32 size)
 
 			if(!case1&&!case2)
 			{
-				if((uint32)sbrk(size)==-1) return NULL;
+				if((int)sbrk(size)==-1) return NULL;
 				return sbrk(size);
 				//print_blocks_list(freeBlocksList);
 
-				}
-			else
-			{
-				LIST_REMOVE(&freeBlocksList,blk);
-
-				return blk;
 			}
+			LIST_REMOVE(&freeBlocksList,blk);
 
-
-
-
-return NULL;
+			return blk;
 }
 //=========================================
 // [4] ALLOCATE BLOCK BY BEST FIT:
