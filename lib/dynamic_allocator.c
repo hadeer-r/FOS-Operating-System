@@ -387,10 +387,10 @@ void *realloc_block_FF(void* va, uint32 new_size)
 		free_block(va);
 		return NULL;
 	}
+	if(get_block_size(va)==new_size)
+			return va;
 
 	uint32 old_size = get_block_size(va);
-	if(old_size==new_size)
-		return va;
 
 
 	uint32 diff_size = new_size-old_size;
