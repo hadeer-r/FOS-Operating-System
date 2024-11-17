@@ -14,7 +14,31 @@ int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate
 {
 	//TODO: [PROJECT'24.MS2 - #01] [1] KERNEL HEAP - initialize_kheap_dynamic_allocator
 	// Write your code here, remove the panic and write your code
-	panic("initialize_kheap_dynamic_allocator() is not implemented yet...!!");
+
+	//initialize_paging()??!
+	start=daStart;
+
+	initSizeToAllocate=ROUNDUP(initSizeToAllocate,PAGE_SIZE);
+	int needed_frames=initSizeToAllocate/PAGE_SIZE;
+	seg_break= start+initSizeToAllocate;
+
+	limit= daLimit;
+
+	 if(seg_break>daLimit)
+			return   E_NO_MEM;
+	 if(needed_frames>LIST_SIZE(&freeBlocksList))
+	 		return   E_NO_MEM;
+
+
+	 for(uint32 i=0;i<needed_frames;i++){
+	 		struct FrameInfo* ptr_frame;
+	 		allocate_frame(&ptr_frame);
+	 		map_frame(ptr_page_directory,ptr_frame, (start+i*PAGE_SIZE),PERM_WRITEABLE|PERM_PRESENT|PERM_MODIFIED);
+
+	 	}
+	 initialize_dynamic_allocator(start,initSizeToAllocate);
+
+        return 0;
 }
 
 void* sbrk(int numOfPages)
