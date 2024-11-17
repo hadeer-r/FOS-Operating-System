@@ -26,8 +26,10 @@ int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate
 
 	 if(seg_break>daLimit)
 			return   E_NO_MEM;
-	 if(needed_frames>LIST_SIZE(&freeBlocksList))
+	 //freeBlocksList
+	 if(needed_frames>LIST_SIZE(&MemFrameLists.free_frame_list))
 	 		return   E_NO_MEM;
+
 
 
 	 for(uint32 i=0;i<needed_frames;i++){
