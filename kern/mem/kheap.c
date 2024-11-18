@@ -116,17 +116,17 @@ void kfree(void* virtual_address)
 	 else if (va >= (limit + PAGE_SIZE) && va < KERNEL_HEAP_MAX) {
 	     uint32* page;
 
-		struct FrameInfo* frame_info = get_frame_info(ptr_page_directory, va, &page);
+	     struct FrameInfo* frame_info = get_frame_info(ptr_page_directory, va, &page);
 
 
-		uint32 frames = (frame_info->references + PAGE_SIZE - 1) / PAGE_SIZE; 
+	     uint32 frames = (frame_info->references + PAGE_SIZE - 1) / PAGE_SIZE; 
 
-		 for (uint32 i = 0; i < frames ; i++) {
-		    uint32 frame_address = va + (i * PAGE_SIZE);
+	     for (uint32 i = 0; i < frames ; i++) {
+	        uint32 frame_address = va + (i * PAGE_SIZE);
 
-		    unmap_frame(ptr_page_directory, frame_address);
+		 unmap_frame(ptr_page_directory, frame_address);
 
-		  }
+		 }
 	 }
 
 	 else {
