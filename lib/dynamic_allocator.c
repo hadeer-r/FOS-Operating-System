@@ -204,9 +204,28 @@ void *alloc_block_FF(uint32 size)
 
 			if(!case1&&!case2)
 			{
-				if((int)sbrk(size)==-1) return NULL;
-				return sbrk(size);
-				//print_blocks_list(freeBlocksList);
+				uint32 new_size=ROUNDUP(size,PAGE_SIZE);
+				int needed_pages=size/PAGE_SIZE;
+				void* address=sbrk(needed_pages);
+				if(address==(void*)-1) return NULL;
+				struct BlockElement * newBlock_add =address+new_size;
+				struct BlockElement*prev = (struct BlockElement*)((char *)newBlock_add-sizeof(uint32));
+                   if(is_free_block(prev))
+                   {
+                	   uint32 new_sz= get_block_size(prev)+new_size;
+                	   	set_block_data(prev,new_sz,0);
+
+                   }
+                   else
+                   {
+                	   set_block_data(newBlock_add,new_size,0);
+                	   LIST_INSERT_TAIL(&(freeBlocksList), newBlock_add);
+
+                	   }
+
+				alloc_block_FF(size);
+
+
 
 			}
 			LIST_REMOVE(&freeBlocksList,blk);

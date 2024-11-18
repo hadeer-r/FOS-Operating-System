@@ -26,7 +26,7 @@ int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate
 
 	 if(seg_break>daLimit)
 			return   E_NO_MEM;
-	 //freeBlocksList
+
 	 if(needed_frames>LIST_SIZE(&MemFrameLists.free_frame_list))
 	 		return   E_NO_MEM;
 
@@ -56,12 +56,38 @@ void* sbrk(int numOfPages)
 	 */
 
 	//MS2: COMMENT THIS LINE BEFORE START CODING==========
-	return (void*)-1 ;
+	//return (void*)-1 ;
 	//====================================================
 
 	//TODO: [PROJECT'24.MS2 - #02] [1] KERNEL HEAP - sbrk
 	// Write your code here, remove the panic and write your code
-	panic("sbrk() is not implemented yet...!!");
+
+	if(numOfPages==0) return (void*)seg_break;
+	else
+	{
+		/*uint32 available_size=ROUNDDOWN(limit-seg_break,PAGE_SIZE);
+		int available_pages=available_size/PAGE_SIZE; // way 1*/
+		/*if(available_pages<numOfPages)
+					return (void*)-1 ;*/
+
+		  uint32 needed_break=seg_break+(numOfPages-1)*PAGE_SIZE;
+		if(needed_break>limit) return (void*)-1 ;
+
+		if(numOfPages>LIST_SIZE(&MemFrameLists.free_frame_list))
+			 		return  (void*)-1 ;
+
+		 for(uint32 i=0;i<numOfPages;i++){
+			 		struct FrameInfo* ptr_frame;
+			 		allocate_frame(&ptr_frame);
+			 		map_frame(ptr_page_directory,ptr_frame, (seg_break+i*PAGE_SIZE),PERM_WRITEABLE|PERM_PRESENT|PERM_MODIFIED);
+
+			 	}
+		 uint32 prev_break=seg_break;
+		 seg_break=seg_break+(numOfPages-1)*PAGE_SIZE;
+		 return (void*)prev_break;
+
+	}
+
 }
 
 //TODO: [PROJECT'24.MS2 - BONUS#2] [1] KERNEL HEAP - Fast Page Allocator
@@ -70,10 +96,12 @@ void* kmalloc(unsigned int size)
 {
 	//TODO: [PROJECT'24.MS2 - #03] [1] KERNEL HEAP - kmalloc
 	// Write your code here, remove the panic and write your code
-	kpanic_into_prompt("kmalloc() is not implemented yet...!!");
+	//kpanic_into_prompt("kmalloc() is not implemented yet...!!");
+	if(size<=PAGE_SIZE/2)
+		return alloc_block_FF( size);
 
 	// use "isKHeapPlacementStrategyFIRSTFIT() ..." functions to check the current strategy
-
+   return (void*)1;
 }
 
 void kfree(void* virtual_address)
