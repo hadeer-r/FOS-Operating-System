@@ -92,14 +92,66 @@ void* sbrk(int numOfPages)
 
 //TODO: [PROJECT'24.MS2 - BONUS#2] [1] KERNEL HEAP - Fast Page Allocator
 
-void* kmalloc(unsigned int size)
-{
-	//TODO: [PROJECT'24.MS2 - #03] [1] KERNEL HEAP - kmalloc
-	// Write your code here, remove the panic and write your code
-	//kpanic_into_prompt("kmalloc() is not implemented yet...!!");
-		return alloc_block_FF( size);
 
-	// use "isKHeapPlacementStrategyFIRSTFIT() ..." functions to check the current strategy
+void* kmalloc (unsigned int size ){
+if(isKHeapPlacementStrategyFIRSTFIT()==0){
+cprintf("not following the first fit");
+return NULL;}
+else{
+     if(size<=DYN_ALLOC_MAX_BLOCK_SIZE){
+        void* blockallocated=alloc_block_FF(size);
+        if(blockallocated==NULL){
+            cprintf("failed to allocate");
+            return NULL;
+        }
+        return blockallocated;
+     }
+else{
+    bool x=0;
+    unsigned int upsize=ROUNDUP(size,PAGE_SIZE);
+    unsigned int numofpages=upsize/PAGE_SIZE;
+    unsigned int VA=KERNEL_HEAP_START;
+    while(VA<KERNEL_HEAP_MAX){
+        x=1;
+        for(unsigned int i=0;i<numofpages;i++){
+            unsigned int VA2 = VA+(i*PAGE_SIZE);
+            struct FrameInfo* infoframe=get_frame_info(ptr_page_directory,VA2,NULL);
+            if(infoframe !=NULL){
+                x=0;
+                break;
+            }
+        }
+        if(x==1){
+            for(unsigned int i=0;i<numofpages;i++){
+                unsigned int mapVA=VA+(i*PAGE_SIZE);
+                struct FrameInfo* infoframe;
+                if(allocate_frame(&infoframe) !=0){
+                    cprintf("failed allocation");
+                    return NULL;
+                }
+                uint32*page_table;
+                if(get_page_table(ptr_page_directory,mapVA,&page_table)==0){
+                    if(create_page_table(ptr_page_directory, mapVA) == NULL){
+                        cprintf("failed to create page table");
+                        free_frame(infoframe);
+                        return NULL;
+                    }
+                }
+                 if (map_frame(ptr_page_directory, infoframe, mapVA, PERM_WRITEABLE) != 0) {
+                            cprintf("map frame failed\n");
+                            free_frame(infoframe);
+                            return NULL;}
+
+                            tlb_invalidate(ptr_page_directory,(void*)mapVA);
+            }
+            return(void*)VA;
+        }
+        VA+=PAGE_SIZE;
+    }
+    return NULL;
+}
+}
+return NULL;
 }
 
 void kfree(void* virtual_address)
