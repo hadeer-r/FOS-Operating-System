@@ -94,6 +94,7 @@ void* sbrk(int numOfPages)
 
 
 void* kmalloc (unsigned int size ){
+
 if(isKHeapPlacementStrategyFIRSTFIT()==0){
 cprintf("not following the first fit");
 return NULL;}
@@ -107,22 +108,42 @@ else{
         return blockallocated;
      }
 else{
+	cprintf("==========first Fit=========\n");
     bool x=0;
     unsigned int upsize=ROUNDUP(size,PAGE_SIZE);
     unsigned int numofpages=upsize/PAGE_SIZE;
     unsigned int VA=KERNEL_HEAP_START;
     while(VA<KERNEL_HEAP_MAX){
+    	cprintf("ttttttttt----in while loop----ttttttt\n");
         x=1;
-        for(unsigned int i=0;i<numofpages;i++){
+        for(unsigned int i=1;i<numofpages;i++){
+        	cprintf("ttttttttt----in for loop 1----ttttttt\n");
             unsigned int VA2 = VA+(i*PAGE_SIZE);
-            struct FrameInfo* infoframe=get_frame_info(ptr_page_directory,VA2,NULL);
+            cprintf("----------1\n");
+            cprintf("VA2 = %x, \nVA = %x\n",VA2,VA);
+
+            if (VA2 < KERNEL_HEAP_START || VA2 >= KERNEL_HEAP_MAX) {
+                cprintf("Address out of kernel heap range: %x\n", VA2);
+                return NULL;
+            }
+
+            cprintf("page directory = %p\n",ptr_page_directory);
+            uint32*page_table;
+            struct FrameInfo* infoframe;
+                 if(get_page_table(ptr_page_directory,VA2,&page_table)!=0)
+                 {
+                	 infoframe=get_frame_info(ptr_page_directory,VA2,(uint32**)page_table);
+                 }
+
+            cprintf("----------2\n");
             if(infoframe !=NULL){
                 x=0;
                 break;
             }
         }
         if(x==1){
-            for(unsigned int i=0;i<numofpages;i++){
+            for(unsigned int i=1;i<numofpages;i++){
+            	cprintf("ttttttttt----in for loop 2----ttttttt\n");
                 unsigned int mapVA=VA+(i*PAGE_SIZE);
                 struct FrameInfo* infoframe;
                 if(allocate_frame(&infoframe) !=0){
@@ -158,12 +179,38 @@ void kfree(void* virtual_address)
 {
 	//TODO: [PROJECT'24.MS2 - #04] [1] KERNEL HEAP - kfree
 	// Write your code here, remove the panic and write your code
-	panic("kfree() is not implemented yet...!!");
+	//panic("kfree() is not implemented yet...!!");
+         uint32 va = (uint32)virtual_address;
 
+	 if (va >= start && va < seg_break) {
+	     return free_block((void*)va);
+	 }
+
+
+	 else if (va >= (limit + PAGE_SIZE) && va < KERNEL_HEAP_MAX) {
+	     uint32* page;
+
+	     struct FrameInfo* frame_info = get_frame_info(ptr_page_directory, va, &page);
+
+
+	     uint32 frames = (frame_info->references + PAGE_SIZE - 1) / PAGE_SIZE;
+
+	     for (uint32 i = 0; i < frames ; i++) {
+	        uint32 frame_address = va + (i * PAGE_SIZE);
+
+		 unmap_frame(ptr_page_directory, frame_address);
+
+		 }
+	 }
+
+	 else {
+	     panic("Invalid virtual address passed to kfree");
+     }
 	//you need to get the size of the given allocation using its address
 	//refer to the project presentation and documentation for details
 
 }
+
 
 unsigned int kheap_physical_address(unsigned int virtual_address)
 {
