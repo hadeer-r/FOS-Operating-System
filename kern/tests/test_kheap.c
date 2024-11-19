@@ -1998,6 +1998,7 @@ int test_ksbrk()
 	uint32 oldBrk, newBrk;
 	cprintf("\nSTEP A: check calling sbrk() in alloc_FF() with last block is allocated [25%]\n\n");
 	{
+
 		//2 KB
 		actualSize = 2*kilo;
 		freeFrames = (int)sys_calculate_free_frames() ;
@@ -2070,7 +2071,7 @@ int test_ksbrk()
 	}
 	if (correct)
 		eval += 25;
-
+	 cprintf("kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk testA1 :%d\n",10,"\n");
 	cprintf("\nSTEP B: check calling sbrk() in alloc_FF() with last block is free (coalesce is expected) [25%]\n\n");
 	{
 		//2 KB: sbrk is called with last block is allocated
