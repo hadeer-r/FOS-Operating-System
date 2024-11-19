@@ -147,8 +147,8 @@ int cow = 0;
 void *alloc_block_FF(uint32 size) {
 	if (size == 0)
 		return NULL;
-	cprintf("ttttttttttttttttttttttttttttttttttt :%d\n", ++cow, "\n");
-	print_blocks_list((struct MemBlock_LIST) (freeBlocksList));
+//	cprintf("ttttttttttttttttttttttttttttttttttt :%d\n", ++cow, "\n");
+//	print_blocks_list((struct MemBlock_LIST) (freeBlocksList));
 	//==================================================================================
 	//DON'T CHANGE THESE LINES==========================================================
 	//==================================================================================
@@ -179,7 +179,6 @@ void *alloc_block_FF(uint32 size) {
 	LIST_FOREACH (blk,&(freeBlocksList))
 	{
 		if ((get_block_size((void*) blk) >= size)) {
-			//cprintf("i can alloc :%d\n",33,"\n");
 
 			//
 			if (get_block_size((void*) blk) > size + (uint32) 16) // what is minimum block size?
@@ -209,7 +208,7 @@ void *alloc_block_FF(uint32 size) {
 	}
 
 	if (!case1 && !case2) {
-		cprintf("i can not alloc :%d\n", 55555, "\n");
+//		cprintf("i can not alloc :%d\n", 55555, "\n");
 
 		uint32 new_size = size;
 		new_size = ROUNDUP(new_size, PAGE_SIZE);
@@ -218,6 +217,9 @@ void *alloc_block_FF(uint32 size) {
 
 		if (address == (void*) -1)
 			return NULL;
+
+	    uint32* END_Block = (uint32*) ((uint32)address + new_size - sizeof(uint32));
+	    *END_Block = 0x1;
 
 		struct BlockElement*p = NULL;
 		if (LIST_SIZE(&(freeBlocksList)))
@@ -244,7 +246,7 @@ void *alloc_block_FF(uint32 size) {
 
 	}
 
-	cprintf("Done :%d\n", 10, "\n");
+//	cprintf("Done :%d\n", 10, "\n");
 
 	return (void *) blk;
 }
