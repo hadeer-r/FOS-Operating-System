@@ -169,7 +169,7 @@ unsigned int kheap_virtual_address(unsigned int physical_address)
         return 0;
     }
 
-    uint32 virtual_address = (ff->va & 0xFFFFF000) + (physical_address & 0x00000FFF);
+    uint32 virtual_address = (ff->bufferedVA & 0xFFFFF000) + (physical_address & 0x00000FFF);
     return virtual_address;
 	
 }
