@@ -45,7 +45,7 @@ struct FrameElement {
 
 int numOfKheapVACalls ;
 struct FrameElement Array_frame[1048576];
-uint32 count = 0;
+uint32 frame_array_index = 0;
 
 //TODO: [PROJECT'24.MS2 - #01] [1] KERNEL HEAP - add suitable code here
 
