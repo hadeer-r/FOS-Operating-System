@@ -103,6 +103,7 @@ void* kmalloc(unsigned int size) {
     uint32 count = 0;
     uint32 addstart = 0;
 
+
     if (isKHeapPlacementStrategyFIRSTFIT() == 0) {
         cprintf("not following the first fit");
         return NULL;
@@ -112,60 +113,45 @@ void* kmalloc(unsigned int size) {
         } else {
             cprintf("==========first Fit=========\n");
             // in kmalloc page allocator
-//            struct FrameInfo *head;
-//            struct FrameInfo* start_page;
-//            LIST_FOREACH(head,&MemFrameLists.free_frame_list){
-//            	count++;
-//            	if(count==0){
-//
-//            	}
-//            }
-            for (uint32 addres = limit + PAGE_SIZE; addres < KERNEL_HEAP_MAX; addres += PAGE_SIZE) {
-                uint32* pagetable;
-                cprintf("==========1=========\n");
-                if (get_page_table(ptr_page_directory, addres, &pagetable) == 0 && pagetable != NULL) {
-                	cprintf("==========2=========\n");
-                	if (pagetable[PDX(addres)] == 0) {
-                		cprintf("==========3=========\n");
-                        if (count == 0) {
-                            addstart = addres;
-                        }
-                        count++;
-							if (count == numofpages) {
-								break;
-							}
-						} else {
-							count = 0;
-						}
-					} else {
-						count = 0;
-					}
-				}
+            struct FrameInfo *cur;
+            struct FrameInfo* start_page;
+            struct FrameInfo* end_page;
 
-            if (count == numofpages) {
-                for (uint32 x = 1; x < upsize; x += PAGE_SIZE) {
-                	cprintf("==========4=========\n");
-                    struct FrameInfo* FIforkmalloc;
-                    if (allocate_frame(&FIforkmalloc) != 0) {
-                    	cprintf("==========5=========\n");
-                        return NULL;
-                    }
-                    uint32 CA = addstart + x;
-                    if (map_frame(ptr_page_directory, FIforkmalloc, CA, PERM_WRITEABLE | PERM_USER | PERM_PRESENT) != 0) {
-                    	cprintf("==========6=========\n");
-                    	FIforkmalloc->bufferedVA = CA;
-                        return NULL;
-                    }
-                    FIforkmalloc->bufferedVA = CA;
-                }
+            LIST_FOREACH(cur,&MemFrameLists.free_frame_list){
+            	cprintf("==========1\n");
+            	count++;
+            	if(count==0){
+            		start_page=cur;
+            	}
+            	if(count<=numofpages){
+            		uint32 curVA= limit+(uint32)cur;
+            		int ptr_page_directory=PDX(cur);
+                	cprintf("==========2\n");
+            		uint32* pagetable;
+            		get_page_table((uint32*)ptr_page_directory,curVA,&pagetable);
+                	cprintf("==========3\n");
+            		addstart = (uint32)cur;
+            		uint32 result_map;
 
-                for (uint32 i = 0; i < numofpages; i++) {
-                	cprintf("==========7=========\n");
-                    uint32 y = ((addstart / PAGE_SIZE) + i) - (KERNEL_HEAP_START / PAGE_SIZE);
-                    allocatesize[y] = size;
-                }
-                return (void*)addstart; // Corrected return value to point to allocated start
+            		result_map=map_frame((uint32*)ptr_page_directory,cur,curVA,PERM_WRITEABLE | PERM_USER | PERM_PRESENT);
+                	cprintf("==========4\n");
+            		if(result_map!=0) {
+            			addstart=limit+(uint32)cur;
+            			return NULL;
+            		}
+            		allocate_frame(&cur);
+                	cprintf("==========5\n");
+            	}
+            	if(count>numofpages){
+            		break;
+            	}
+
+            	LIST_REMOVE(&MemFrameLists.free_frame_list,cur);
+            	cprintf("==========6\n");
+
             }
+            return (void*) addstart;
+
         }
     }
 return NULL;
