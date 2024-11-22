@@ -98,63 +98,71 @@ void* sbrk(int numOfPages)
 uint32 allocatesize[totalpages];
 
 void* kmalloc(unsigned int size) {
-    unsigned int upsize = ROUNDUP(size, PAGE_SIZE);
-    unsigned int numofpages = upsize / PAGE_SIZE;
-    uint32 count = 0;
-    uint32 addstart = 0;
+    // Round up the size to the nearest page size
+    unsigned int roundedSize = ROUNDUP(size, PAGE_SIZE);
+    unsigned int numPages = roundedSize / PAGE_SIZE;
 
+    // If size is within the block allocator range
+    if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
+        return alloc_block_FF(size);
+    }
+    // For allocations larger than the block allocator size, use page allocator
+    else {
+        uint32 startAddress = limit + PAGE_SIZE;
+        uint32 endAddress = KERNEL_HEAP_MAX;
+        uint32 currentAddress = startAddress;
 
-    if (isKHeapPlacementStrategyFIRSTFIT() == 0) {
-        cprintf("not following the first fit");
-        return NULL;
-    } else {
-        if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
-            return alloc_block_FF(size);
-        } else {
-            cprintf("==========first Fit=========\n");
-            // in kmalloc page allocator
-            struct FrameInfo *cur;
-            struct FrameInfo* start_page;
-            struct FrameInfo* end_page;
+        // First Fit Strategy
+        uint32 freeSpaceStart = 0; // To track the start of the free space
+        unsigned int consecutivePages = 0;
 
-            LIST_FOREACH(cur,&MemFrameLists.free_frame_list){
-            	cprintf("==========1\n");
-            	count++;
-            	if(count==0){
-            		start_page=cur;
-            	}
-            	if(count<=numofpages){
-            		uint32 curVA= limit+(uint32)cur;
-            		int ptr_page_directory=PDX(cur);
-                	cprintf("==========2\n");
-            		uint32* pagetable;
-            		get_page_table((uint32*)ptr_page_directory,curVA,&pagetable);
-                	cprintf("==========3\n");
-            		addstart = (uint32)cur;
-            		uint32 result_map;
+        while (currentAddress < endAddress) {
+            uint32* pageTable;
+            struct FrameInfo* frameInfo = get_frame_info(ptr_page_directory, currentAddress, &pageTable);
 
-            		result_map=map_frame((uint32*)ptr_page_directory,cur,curVA,PERM_WRITEABLE | PERM_USER | PERM_PRESENT);
-                	cprintf("==========4\n");
-            		if(result_map!=0) {
-            			addstart=limit+(uint32)cur;
-            			return NULL;
-            		}
-            		allocate_frame(&cur);
-                	cprintf("==========5\n");
-            	}
-            	if(count>numofpages){
-            		break;
-            	}
-
-            	LIST_REMOVE(&MemFrameLists.free_frame_list,cur);
-            	cprintf("==========6\n");
-
+            if (frameInfo == NULL) {
+                // Found an empty frame
+                if (consecutivePages == 0) {
+                    freeSpaceStart = currentAddress; // Mark the start of the free space
+                }
+                consecutivePages++;
+            } else {
+                // Reset if allocation fails to find sufficient space
+                consecutivePages = 0;
             }
-            return (void*) addstart;
 
+            // If enough space is found, allocate and map the pages
+            if (consecutivePages == numPages) {
+                uint32 address = freeSpaceStart;
+
+                for (unsigned int i = 0; i < numPages; i++) {
+                    struct FrameInfo* frame;
+                    int result = allocate_frame(&frame);
+                    if (result != 0) {
+                        // Cleanup allocated frames on failure
+                        for (unsigned int j = 0; j < i; j++) {
+                            unmap_frame(ptr_page_directory, freeSpaceStart + (j * PAGE_SIZE));
+                        }
+                        return NULL; // Allocation failed
+                    }
+                    map_frame(ptr_page_directory, frame, address, PERM_WRITEABLE | PERM_PRESENT);
+                    address += PAGE_SIZE;
+                }
+
+                // Mark the allocated space in the tracking array
+                for (unsigned int i = 0; i < numPages; i++) {
+                    allocatesize[(freeSpaceStart + i * PAGE_SIZE - KERNEL_HEAP_START) / PAGE_SIZE] = 1;
+                }
+
+                return (void*)freeSpaceStart;
+            }
+
+            currentAddress += PAGE_SIZE;
         }
     }
-return NULL;
+
+    // Allocation failed
+    return NULL;
 }
 
 
