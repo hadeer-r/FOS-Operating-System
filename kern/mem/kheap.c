@@ -69,7 +69,7 @@ void* sbrk(int numOfPages)
 		int available_pages=available_size/PAGE_SIZE; // way 1*/
 		/*if(available_pages<numOfPages)
 					return (void*)-1 ;*/
-//		cprintf("curbreak:%x\n",seg_break ,"\n");
+
 		uint32 needed_break=seg_break+(( uint32)numOfPages)*PAGE_SIZE;
 		if(needed_break>limit) return (void*)-1 ;
 
@@ -83,7 +83,7 @@ void* sbrk(int numOfPages)
 			 	}
 		 uint32 prev_break=seg_break;
 		 seg_break=seg_break+(( uint32)numOfPages)*PAGE_SIZE; //needed_break;
-//		 cprintf("modbreak :%x\n",seg_break ,"\n");
+
 		 return (void*)prev_break;
 
 	}
