@@ -4,6 +4,7 @@
 #include <inc/dynamic_allocator.h>
 #include "memory_manager.h"
 
+
 //Initialize the dynamic allocator of kernel heap with the given start address, size & limit
 //All pages in the given range should be allocated
 //Remember: call the initialize_dynamic_allocator(..) to complete the initialization
@@ -93,87 +94,84 @@ void* sbrk(int numOfPages)
 //TODO: [PROJECT'24.MS2 - BONUS#2] [1] KERNEL HEAP - Fast Page Allocator
 
 
-void* kmalloc (unsigned int size ){
+#define totalpages ((KERNEL_HEAP_MAX - KERNEL_HEAP_START) / PAGE_SIZE)
+uint32 allocatesize[totalpages];
 
-if(isKHeapPlacementStrategyFIRSTFIT()==0){
-cprintf("not following the first fit");
-return NULL;}
-else{
-     if(size<=DYN_ALLOC_MAX_BLOCK_SIZE){
-        void* blockallocated=alloc_block_FF(size);
-        if(blockallocated==NULL){
-            cprintf("failed to allocate");
-            return NULL;
-        }
-        return blockallocated;
-     }
-else{
-	cprintf("==========first Fit=========\n");
-    bool x=0;
-    unsigned int upsize=ROUNDUP(size,PAGE_SIZE);
-    unsigned int numofpages=upsize/PAGE_SIZE;
-    unsigned int VA=KERNEL_HEAP_START;
-    while(VA<KERNEL_HEAP_MAX){
-    	cprintf("ttttttttt----in while loop----ttttttt\n");
-        x=1;
-        for(unsigned int i=1;i<numofpages;i++){
-        	cprintf("ttttttttt----in for loop 1----ttttttt\n");
-            unsigned int VA2 = VA+(i*PAGE_SIZE);
-            cprintf("----------1\n");
-            cprintf("VA2 = %x, \nVA = %x\n",VA2,VA);
+void* kmalloc(unsigned int size) {
+    unsigned int upsize = ROUNDUP(size, PAGE_SIZE);
+    unsigned int numofpages = upsize / PAGE_SIZE;
+    uint32 count = 0;
+    uint32 addstart = 0;
 
-            if (VA2 < KERNEL_HEAP_START || VA2 >= KERNEL_HEAP_MAX) {
-                cprintf("Address out of kernel heap range: %x\n", VA2);
-                return NULL;
-            }
+    if (isKHeapPlacementStrategyFIRSTFIT() == 0) {
+        cprintf("not following the first fit");
+        return NULL;
+    } else {
+        if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
+            return alloc_block_FF(size);
+        } else {
+            cprintf("==========first Fit=========\n");
+            // in kmalloc page allocator
+//            struct FrameInfo *head;
+//            struct FrameInfo* start_page;
+//            LIST_FOREACH(head,&MemFrameLists.free_frame_list){
+//            	count++;
+//            	if(count==0){
+//
+//            	}
+//            }
+            for (uint32 addres = limit + PAGE_SIZE; addres < KERNEL_HEAP_MAX; addres += PAGE_SIZE) {
+                uint32* pagetable;
+                cprintf("==========1=========\n");
+                if (get_page_table(ptr_page_directory, addres, &pagetable) == 0 && pagetable != NULL) {
+                	cprintf("==========2=========\n");
+                	if (pagetable[PDX(addres)] == 0) {
+                		cprintf("==========3=========\n");
+                        if (count == 0) {
+                            addstart = addres;
+                        }
+                        count++;
+							if (count == numofpages) {
+								break;
+							}
+						} else {
+							count = 0;
+						}
+					} else {
+						count = 0;
+					}
+				}
 
-            cprintf("page directory = %p\n",ptr_page_directory);
-            uint32*page_table;
-            struct FrameInfo* infoframe;
-                 if(get_page_table(ptr_page_directory,VA2,&page_table)!=0)
-                 {
-                	 infoframe=get_frame_info(ptr_page_directory,VA2,(uint32**)page_table);
-                 }
-
-            cprintf("----------2\n");
-            if(infoframe !=NULL){
-                x=0;
-                break;
-            }
-        }
-        if(x==1){
-            for(unsigned int i=1;i<numofpages;i++){
-            	cprintf("ttttttttt----in for loop 2----ttttttt\n");
-                unsigned int mapVA=VA+(i*PAGE_SIZE);
-                struct FrameInfo* infoframe;
-                if(allocate_frame(&infoframe) !=0){
-                    cprintf("failed allocation");
-                    return NULL;
-                }
-                uint32*page_table;
-                if(get_page_table(ptr_page_directory,mapVA,&page_table)==0){
-                    if(create_page_table(ptr_page_directory, mapVA) == NULL){
-                        cprintf("failed to create page table");
-                        free_frame(infoframe);
+            if (count == numofpages) {
+                for (uint32 x = 1; x < upsize; x += PAGE_SIZE) {
+                	cprintf("==========4=========\n");
+                    struct FrameInfo* FIforkmalloc;
+                    if (allocate_frame(&FIforkmalloc) != 0) {
+                    	cprintf("==========5=========\n");
                         return NULL;
                     }
+                    uint32 CA = addstart + x;
+                    if (map_frame(ptr_page_directory, FIforkmalloc, CA, PERM_WRITEABLE | PERM_USER | PERM_PRESENT) != 0) {
+                    	cprintf("==========6=========\n");
+                    	FIforkmalloc->bufferedVA = CA;
+                        return NULL;
+                    }
+                    FIforkmalloc->bufferedVA = CA;
                 }
-                 if (map_frame(ptr_page_directory, infoframe, mapVA, PERM_WRITEABLE) != 0) {
-                            cprintf("map frame failed\n");
-                            free_frame(infoframe);
-                            return NULL;}
 
-                            tlb_invalidate(ptr_page_directory,(void*)mapVA);
+                for (uint32 i = 0; i < numofpages; i++) {
+                	cprintf("==========7=========\n");
+                    uint32 y = ((addstart / PAGE_SIZE) + i) - (KERNEL_HEAP_START / PAGE_SIZE);
+                    allocatesize[y] = size;
+                }
+                return (void*)addstart; // Corrected return value to point to allocated start
             }
-            return(void*)VA;
         }
-        VA+=PAGE_SIZE;
     }
-    return NULL;
-}
-}
 return NULL;
 }
+
+
 
 void kfree(void* virtual_address)
 {
