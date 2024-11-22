@@ -188,7 +188,7 @@ void kfree(void* virtual_address)
 	{
 		uint32 pages;
 
-		for (int i=0;i<count;i++)
+		for (int i=0;i<frame_array_index;i++)
 		{
 
 			if (Array_frame[i].virtual_adress == virtual_address)
