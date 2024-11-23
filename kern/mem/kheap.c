@@ -185,12 +185,23 @@ void kfree(void* virtual_address)
 
 	 }
 
-	if (!(va >= (limit + PAGE_SIZE) && va < KERNEL_HEAP_MAX)){
-		panic("Invalid virtual address");
-	}
-
-
+	else if (va >= (limit + PAGE_SIZE) && va < KERNEL_HEAP_MAX)
+	{
 		uint32 pages=10;
+
+//		for (int i=0;i<10;i++)
+//		{
+//
+//			if (Array_frame[i].virtual_adress == virtual_address)
+//			{
+//
+//			    	pages = Array_frame[i].number_of_frames;
+//			    	Array_frame[i].number_of_frames = 0;
+//			    	Array_frame[i].virtual_adress = NULL;
+//			    	break;
+//
+//			}
+//		}
 
 		uint32 current_va = va;
 		for (uint32 i = 1; i <= pages; i++)
@@ -207,6 +218,12 @@ void kfree(void* virtual_address)
 			current_va +=(PAGE_SIZE);
 
 		}
+	}
+
+	 else
+	 {
+		 panic("Invalid virtual address");
+	 }
 
 }
 
