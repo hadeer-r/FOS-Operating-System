@@ -97,8 +97,22 @@ struct Share* get_share(int32 ownerID, char* name)
 {
 	//TODO: [PROJECT'24.MS2 - #17] [4] SHARED MEMORY - get_share()
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("get_share is not implemented yet");
+	//panic("get_share is not implemented yet");
 	//Your Code is Here...
+	struct Share* current_share ;
+	acquire_spinlock(&AllShares.shareslock);
+	LIST_FOREACH(current_share, &AllShares.shares_list)
+	    {
+
+	        if (current_share->ownerID == ownerID && strcmp(current_share->name, name) == 0)
+	        {
+
+	            return current_share;
+	        }
+	    }
+	 release_spinlock(&AllShares.shareslock);
+
+	    return NULL;
 
 }
 
@@ -109,11 +123,95 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size, uint8 isWrit
 {
 	//TODO: [PROJECT'24.MS2 - #19] [4] SHARED MEMORY [KERNEL SIDE] - createSharedObject()
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("createSharedObject is not implemented yet");
+	//panic("createSharedObject is not implemented yet");
 	//Your Code is Here...
 
 	struct Env* myenv = get_cpu_proc(); //The calling environment
-}
+	if (myenv == NULL)
+	    {
+	        return E_NO_SHARE;
+	    }
+
+
+	    if (get_share(ownerID, shareName) != NULL)
+	    {
+	        return E_SHARED_MEM_EXISTS;
+	    }
+
+
+	    struct Share* newShare = (struct Share*)kmalloc(sizeof(struct Share));
+	    if (newShare == NULL)
+	    {
+	        return E_NO_SHARE; // Memory allocation failed
+	    }
+
+	    // Initialize the Share object
+	    newShare->ownerID = ownerID;
+	    strncpy(newShare->name, shareName, sizeof(newShare->name) - 1);
+	    newShare->name[sizeof(newShare->name) - 1] = '\0';
+	    newShare->size = size;
+	    newShare->isWritable = isWritable;
+	    newShare->references = 0;
+
+
+	    unsigned int upsize = ROUNDUP(size, PAGE_SIZE);
+	        unsigned int num_of_pages = upsize / PAGE_SIZE;
+
+
+	    newShare->framesStorage = (struct FrameInfo**)kmalloc(num_of_pages * sizeof(struct FrameInfo*));
+	    if (newShare->framesStorage == NULL)
+	    {
+	        kfree(newShare);
+	        return E_NO_SHARE;
+	    }
+
+
+	    for (uint32 i = 0; i < num_of_pages; ++i)
+	    {
+	        struct FrameInfo* frame ;
+
+
+	        if (allocate_frame(&frame) != 0)
+	        {
+
+	            for (uint32 j = 1; j < i; ++j)
+	            {
+	                free_frame(newShare->framesStorage[j]);
+	            }
+	            kfree(newShare->framesStorage);
+	            kfree(newShare);
+	            return E_NO_SHARE;
+	        }
+
+
+	        newShare->framesStorage[i] = frame;
+
+
+	        uint32 * va = (virtual_address + i * PAGE_SIZE);
+	        if (map_frame(ptr_page_directory, frame, (uint32)va, PERM_WRITEABLE) != 0)
+	        {
+
+	            free_frame(frame);
+	            for (uint32 j = 1; j < i; ++j)
+	            {
+	                free_frame(newShare->framesStorage[j]);
+	            }
+	            kfree(newShare->framesStorage);
+	            kfree(newShare);
+	            return E_NO_SHARE;
+	        }
+	    }
+
+
+	    newShare->ID = (int)newShare & 0x7FFFFFFF;
+
+
+	    acquire_spinlock(&AllShares.shareslock);
+	    LIST_INSERT_HEAD(&AllShares.shares_list, newShare);
+	    release_spinlock(&AllShares.shareslock);
+
+	    return newShare->ID;
+	}
 
 
 //======================
@@ -123,11 +221,42 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address)
 {
 	//TODO: [PROJECT'24.MS2 - #21] [4] SHARED MEMORY [KERNEL SIDE] - getSharedObject()
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("getSharedObject is not implemented yet");
+	//panic("getSharedObject is not implemented yet");
 	//Your Code is Here...
 
 	struct Env* myenv = get_cpu_proc(); //The calling environment
-}
+	    if (myenv == NULL)
+	    {
+	        return E_SHARED_MEM_NOT_EXISTS;
+	    }
+	    struct Share* share = get_share(ownerID, shareName);
+	       if (share == NULL)
+	       {
+	           return E_SHARED_MEM_NOT_EXISTS;
+	       }
+	       unsigned int upsize = ROUNDUP(share->size, PAGE_SIZE);
+	           unsigned int num_of_pages = upsize / PAGE_SIZE;
+	       for (uint32 i = 1; i < num_of_pages; ++i)
+	          {
+	              struct FrameInfo* frame = share->framesStorage[i];
+
+
+	              uint32* va = (virtual_address + i * PAGE_SIZE);
+
+
+	              if (map_frame(ptr_page_directory, frame, (uint32)va, share->isWritable) != 0)
+	              {
+	                  return E_SHARED_MEM_NOT_EXISTS;
+	              }
+	          }
+
+
+	          share->references++;
+
+
+	          return share->ID;
+	      }
+
 
 //==================================================================================//
 //============================== BONUS FUNCTIONS ===================================//
