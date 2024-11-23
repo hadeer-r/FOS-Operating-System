@@ -167,39 +167,46 @@ void* kmalloc(unsigned int size) {
 
 
 
+
 void kfree(void* virtual_address)
 {
 	//TODO: [PROJECT'24.MS2 - #04] [1] KERNEL HEAP - kfree
 	// Write your code here, remove the panic and write your code
 	//panic("kfree() is not implemented yet...!!");
-         uint32 va = (uint32)virtual_address;
 
-	 if (va >= start && va < seg_break) {
-	     return free_block((void*)va);
+    uint32 va = (uint32)virtual_address;
+
+	if (va >= start && va < seg_break)
+	 {
+
+
+		return free_block(virtual_address);
+
+
 	 }
 
-
-	 else if (va >= (limit + PAGE_SIZE) && va < KERNEL_HEAP_MAX) {
-	     uint32* page;
-
-	     struct FrameInfo* frame_info = get_frame_info(ptr_page_directory, va, &page);
+	if (!(va >= (limit + PAGE_SIZE) && va < KERNEL_HEAP_MAX)){
+		panic("Invalid virtual address");
+	}
 
 
-	     uint32 frames = (frame_info->references + PAGE_SIZE - 1) / PAGE_SIZE;
+		uint32 pages=10;
 
-	     for (uint32 i = 0; i < frames ; i++) {
-	        uint32 frame_address = va + (i * PAGE_SIZE);
+		uint32 current_va = va;
+		for (uint32 i = 1; i <= pages; i++)
+		{
+			uint32* ptr_page_table = NULL;
 
-		 unmap_frame(ptr_page_directory, frame_address);
+			struct FrameInfo* frame_info = get_frame_info(ptr_page_directory,current_va, &ptr_page_table);
+			if (frame_info != NULL)
+			{
+				unmap_frame(ptr_page_directory,current_va);
 
-		 }
-	 }
+			}
 
-	 else {
-	     panic("Invalid virtual address passed to kfree");
-     }
-	//you need to get the size of the given allocation using its address
-	//refer to the project presentation and documentation for details
+			current_va +=(PAGE_SIZE);
+
+		}
 
 }
 
