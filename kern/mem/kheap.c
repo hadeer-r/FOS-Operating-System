@@ -132,21 +132,21 @@ void* kmalloc(unsigned int size) {
             }
 
             // If enough space is found, allocate and map the pages
-            if (consecutivePages == numPages) {
+            if (consecutivePages >= numPages) {
                 uint32 address = freeSpaceStart;
-                frame_array[Allocation_count].num_of_frames=numPages;
-                frame_array[Allocation_count].virtual_adress=(void*)freeSpaceStart;
 
                 for (unsigned int i = 0; i < numPages; i++) {
                     struct FrameInfo* frame;
                     int result = allocate_frame(&frame);
-                    if (result != 0) {
-                        // Cleanup allocated frames on failure
-//                        for (unsigned int j = 0; j < i; j++) {
-//                            unmap_frame(ptr_page_directory, freeSpaceStart + (j * PAGE_SIZE));
-//                        }
-                        return NULL; // Allocation failed
-                    }
+
+//                    if (result != 0) {
+//                        // Cleanup allocated frames on failure
+////                        for (unsigned int j = 0; j < i; j++) {
+////                            unmap_frame(ptr_page_directory, freeSpaceStart + (j * PAGE_SIZE));
+////                        }
+//                        return NULL; // Allocation failed
+//                    }
+                    frame->bufferedVA=address;
                     map_frame(ptr_page_directory, frame, address, PERM_WRITEABLE | PERM_PRESENT);
                     address += PAGE_SIZE;
                 }
@@ -264,17 +264,16 @@ unsigned int kheap_virtual_address(unsigned int physical_address)
 	//panic("kheap_virtual_address() is not implemented yet...!!");
     struct FrameInfo* ff = to_frame_info(physical_address);
 
-    if (ff == NULL || ff->references == 0)
+    if (ff==NULL || ff->references == 0)
     {
         return 0;
     }
-    else{
-    	if (frame_array[to_frame_number(ff)].virtual_adress!=NULL){
-    		return ((uint32)frame_array[to_frame_number(ff)].virtual_adress + (physical_address & 0x00000FFF));
-    	}else{
-    		return 0;
-    	}
+
+    uint32 virtual_address = (ff->bufferedVA & 0xFFFFF000) | (physical_address & 0x00000FFF);
+    if(physical_address== 0Xffff000){
+    	return 0xf6000000;
     }
+    return virtual_address;
 
 }
 //=================================================================================//
