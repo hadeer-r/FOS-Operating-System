@@ -192,12 +192,12 @@ void kfree(void* virtual_address)
 //		for (int i=0;i<10;i++)
 //		{
 //
-//			if (Array_frame[i].virtual_adress == virtual_address)
+//			if (frame_array[i].virtual_adress == virtual_address)
 //			{
 //
-//			    	pages = Array_frame[i].number_of_frames;
-//			    	Array_frame[i].number_of_frames = 0;
-//			    	Array_frame[i].virtual_adress = NULL;
+//			    	pages = frame_array[i].number_of_frames;
+//			    	frame_array[i].number_of_frames = 0;
+//			    	frame_array[i].virtual_adress = NULL;
 //			    	break;
 //
 //			}
