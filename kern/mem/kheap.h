@@ -39,15 +39,12 @@ unsigned int kheap_virtual_address(unsigned int physical_address);
 unsigned int kheap_physical_address(unsigned int virtual_address);
 
 int numOfKheapVACalls ;
+struct MemoryFrame {
+    void* virtual_adress;
+    uint32 num_of_frames;
+};
+struct MemoryFrame frame_array[1048576];
 
-//struct FrameElement {
-//    void* virtual_adress;
-//    uint32 number_of_frames;
-//};
-//
-//int numOfKheapVACalls ;
-//struct FrameElement frame_array[1048576];
-//uint32 frame_array_index = 0;
 //TODO: [PROJECT'24.MS2 - #01] [1] KERNEL HEAP - add suitable code here
 
 uint32 start,seg_break,limit;
