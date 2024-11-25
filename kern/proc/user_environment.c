@@ -876,10 +876,6 @@ void* create_user_kern_stack(uint32* ptr_user_page_directory)
 				pt_set_page_permissions(ptr_user_page_directory , (uint32)bottom_page , 0, PERM_PRESENT);
 				void* user_kern_stack = (void*)((uint32)kern_stack + PAGE_SIZE);
 				return user_kern_stack;
-<<<<<<< HEAD
-=======
-
->>>>>>> system_calls/allocmem
 	//allocate space for the user kernel stack.
 	//remember to leave its bottom page as a GUARD PAGE (i.e. not mapped)
 	//return a pointer to the start of the allocated space (including the GUARD PAGE)
