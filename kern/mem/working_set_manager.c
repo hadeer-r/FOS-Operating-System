@@ -26,8 +26,8 @@ inline struct WorkingSetElement* env_page_ws_list_create_element(struct Env* e, 
 		panic("allocated failed");
 	}
 	new_object ->virtual_address = virtual_address;
-	new_object->prev_next_info.le_prev = NULL;
-	new_object->prev_next_info.le_next = NULL;
+//	new_object->prev_next_info.le_prev = NULL;
+//	new_object->prev_next_info.le_next = NULL;
     return new_object;
 }
 inline void env_page_ws_invalidate(struct Env* e, uint32 virtual_address)

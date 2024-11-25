@@ -64,8 +64,20 @@ void* sget(int32 ownerEnvID, char *sharedVarName)
 {
 	//TODO: [PROJECT'24.MS2 - #20] [4] SHARED MEMORY [USER SIDE] - sget()
 	// Write your code here, remove the panic and write your code
-	panic("sget() is not implemented yet...!!");
-	return NULL;
+//	panic("sget() is not implemented yet...!!");
+//	int size_shared_object = sys_getSizeOfSharedObject(ownerEnvID,sharedVarName);
+//		if(size_shared_object <= 0)
+//			return NULL;
+//	void* allocated_VA = smalloc(sharedVarName,size_shared_object,1);
+//	if(allocated_VA != NULL){
+//		void* shared_object = sys_getSharedObject(ownerEnvID,sharedVarName,allocated_VA);
+//		if(shared_object != NULL){
+//			return shared_object;
+//		}
+//		else
+//			return NULL;
+//	}else
+//		return NULL;
 }
 
 

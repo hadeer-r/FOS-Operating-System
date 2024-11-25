@@ -249,7 +249,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 		        if(faulted_page == E_NO_MEM){
 		        	panic("no free frames exist");
 		        }
-		        int map_faulted_page = map_frame(faulted_env->env_page_directory,ptr_frame_info,fault_va,PERM_PRESENT);
+		        int map_faulted_page = map_frame(faulted_env->env_page_directory,ptr_frame_info,fault_va,PERM_WRITEABLE | PERM_PRESENT);
 		        if(map_faulted_page == E_NO_MEM){
 		        	panic(" no page table found and there’s no free frame for creating it.");
 		        }
@@ -263,38 +263,17 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 		   		     }
 		    }
 		    	struct WorkingSetElement*new_element = env_page_ws_list_create_element(faulted_env, fault_va) ;
-
-		    	LIST_INSERT_TAIL(&(faulted_env->page_WS_list), new_element);
-
-		    	    faulted_env->page_last_WS_element = new_element;
-
-		    	    wsSize++;
-
-		    	    if (wsSize >= faulted_env->page_WS_max_size) {
+                if(faulted_env->page_last_WS_element == NULL){
+                	LIST_INSERT_TAIL(&(faulted_env->page_WS_list), new_element);
+                	if (wsSize >= faulted_env->page_WS_max_size) {
 		    	        faulted_env->page_last_WS_element = LIST_FIRST(&(faulted_env->page_WS_list));
 		    	    }
-		    	    else if (LIST_EMPTY(&(faulted_env->page_WS_list))) {
-		    	        faulted_env->page_last_WS_element = NULL;
-		    	    }
-//		    	    struct WorkingSetElement*new_element = env_page_ws_list_create_element(faulted_env, fault_va) ;
-//		    	                    if (faulted_env->page_last_WS_element == NULL){
-//		    	                    	LIST_INSERT_TAIL(&(faulted_env->page_WS_list), new_element);
-//		    	                    	faulted_env->page_last_WS_element = new_element;
-//		    	                    	 wsSize++;
-//		    	                    }
-//		    	                    else{
-//		    	                     faulted_env->page_last_WS_element = LIST_FIRST(&(faulted_env->page_WS_list));
-//		    	                    }
-//		    	struct WorkingSetElement*new_element = env_page_ws_list_create_element(faulted_env, fault_va) ;
-//			        		LIST_INSERT_TAIL(&(faulted_env->page_WS_list), new_element );
-//		        		faulted_env->page_last_WS_element = new_element;
-//                            wsSize++;
-//		    	        	if(faulted_env->page_last_WS_element != NULL){
-//
-//		        	}
-		//        	else{
-		//        		panic("the next location in the WS after the last set one If list is full.");
-		//        	}
+
+                }
+                else{
+                	LIST_REMOVE(&(faulted_env->page_WS_list),LIST_FIRST(&(faulted_env->page_WS_list)));
+                	LIST_INSERT_TAIL(&(faulted_env->page_WS_list), new_element);
+                }
 
 				//refer to the project presentation and documentation for details
 			}
