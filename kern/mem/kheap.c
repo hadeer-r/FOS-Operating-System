@@ -37,7 +37,8 @@ int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate
 	 		struct FrameInfo* ptr_frame;
 	 		allocate_frame(&ptr_frame);
 	 		map_frame(ptr_page_directory,ptr_frame, (start+i*PAGE_SIZE),PERM_WRITEABLE|PERM_PRESENT|PERM_MODIFIED);
-
+	 		frame_array[to_frame_number(ptr_frame)].virtual_adress=(void*)(start+i*PAGE_SIZE);
+	 		frame_array[to_frame_number(ptr_frame)].num_of_frames=0;
 	 	}
 	 initialize_dynamic_allocator(start,initSizeToAllocate);
 
@@ -80,7 +81,8 @@ void* sbrk(int numOfPages)
 			 		struct FrameInfo* ptr_frame;
 			 		allocate_frame(&ptr_frame);
 			 		map_frame(ptr_page_directory,ptr_frame, (seg_break+i*PAGE_SIZE),PERM_WRITEABLE|PERM_PRESENT|PERM_MODIFIED);
-
+			 		frame_array[to_frame_number(ptr_frame)].virtual_adress=(void*)(seg_break+i*PAGE_SIZE);
+			 		frame_array[to_frame_number(ptr_frame)].num_of_frames=0;
 			 	}
 		 uint32 prev_break=seg_break;
 		 seg_break=seg_break+(( uint32)numOfPages)*PAGE_SIZE; //needed_break;
@@ -92,7 +94,6 @@ void* sbrk(int numOfPages)
 }
 
 //TODO: [PROJECT'24.MS2 - BONUS#2] [1] KERNEL HEAP - Fast Page Allocator
-
 
 #define totalpages ((KERNEL_HEAP_MAX - KERNEL_HEAP_START) / PAGE_SIZE)
 uint32 allocatesize[totalpages];
@@ -252,12 +253,11 @@ unsigned int kheap_virtual_address(unsigned int physical_address)
 
     if (ff == NULL || ff->references == 0)
     {
-
         return 0;
     }
     else{
     	if (frame_array[to_frame_number(ff)].virtual_adress!=NULL){
-    		return ((uint32)frame_array[to_frame_number(ff)].virtual_adress + (physical_address & 0x00000FFF));
+    		return (((uint32)frame_array[to_frame_number(ff)].virtual_adress& 0xFFFFF000) + (physical_address & 0x00000FFF));
     	}else{
     		return 0;
     	}
