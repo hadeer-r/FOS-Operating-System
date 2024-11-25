@@ -20,16 +20,40 @@ void* malloc(uint32 size)
 {
 	//==============================================================
 	//DON'T CHANGE THIS CODE========================================
-	if (size == 0) return NULL ;
 	//==============================================================
 	//TODO: [PROJECT'24.MS2 - #12] [3] USER HEAP [USER SIDE] - malloc()
 	// Write your code here, remove the panic and write your code
-	panic("malloc() is not implemented yet...!!");
-	return NULL;
 	//Use sys_isUHeapPlacementStrategyFIRSTFIT() and	sys_isUHeapPlacementStrategyBESTFIT()
-	//to check the current strategy
+	//to check the current strateg
+ if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
+        return alloc_block_FF(size);
+    } else {
+        uint32 upsize = ROUNDUP(size, PAGE_SIZE);
+        uint32 numpages = upsize / PAGE_SIZE;
+        int count = 0;
+        uint32 begin = (USER_HEAP_START / PAGE_SIZE);
+ if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
+           for (int i = begin; i < (USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE; i++) {
+            if (myEnv->env_page_directory[i] == 0) {
+                count++;
+            if (count == numpages) {
+             for (int j = i - numpages + 1; j <= i; j++) {
+            	 myEnv->env_page_directory[j] = numpages;
+                        }
+                        uint32 add = USER_HEAP_START + (PAGE_SIZE * (i - numpages + 1));
+                        sys_allocate_user_mem(add, size);
 
+                        return (void*)add;
+                    }
+                } else {
+                    count = 0;
+                }
+            }
+        }
+        return NULL;
+    }
 }
+
 
 //=================================
 // [3] FREE SPACE FROM USER HEAP:

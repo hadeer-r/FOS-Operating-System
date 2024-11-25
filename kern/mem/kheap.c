@@ -135,12 +135,7 @@ void* kmalloc(unsigned int size) {
                 for (unsigned int i = 0; i < numpages; i++) {
                     struct FrameInfo* frame;
                     int result = allocate_frame(&frame);
-//                    if (result != 0) {
-////                        for (unsigned int j = 0; j < i; j++) {
-////                            unmap_frame(ptr_page_directory, freeSpaceStart + (j * PAGE_SIZE));
-////                        }
-//                        return NULL;
-//                    }
+
                     map_frame(ptr_page_directory, frame, address, PERM_WRITEABLE | PERM_PRESENT);
                     if(i==0){
                     	frame_array[to_frame_number(frame)].num_of_frames=numpages;
@@ -180,7 +175,6 @@ void kfree(void* virtual_address)
 
 
 		return free_block(virtual_address);
-		cprintf("ttttttttttttttttttt---------it's a block\n");
 
 	 }
 
@@ -262,12 +256,6 @@ unsigned int kheap_virtual_address(unsigned int physical_address)
         return 0;
     }
     else{
-    	if(0xffff000==physical_address){
-    		cprintf("it's a null address**********************\n");
-    		if(physical_address==KERNEL_HEAP_START){
-    			cprintf("===============physical_address==KERNEL_HEAP_START=============\n");
-    		}
-    	}
     	if (frame_array[to_frame_number(ff)].virtual_adress!=NULL){
     		return ((uint32)frame_array[to_frame_number(ff)].virtual_adress + (physical_address & 0x00000FFF));
     	}else{
