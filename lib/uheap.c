@@ -25,34 +25,35 @@ void* malloc(uint32 size)
 	// Write your code here, remove the panic and write your code
 	//Use sys_isUHeapPlacementStrategyFIRSTFIT() and	sys_isUHeapPlacementStrategyBESTFIT()
 	//to check the current strateg
-if (sys_isUHeapPlacementStrategyFIRSTFIT()==1)//el doc kateb we should use it 
-{
-	//el block alloc
-    if (size == 0) {
+ if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
+        return alloc_block_FF(size);
+    } else {
+        uint32 upsize = ROUNDUP(size, PAGE_SIZE);
+        uint32 numpages = upsize / PAGE_SIZE;
+        int count = 0;
+        uint32 begin = (USER_HEAP_START / PAGE_SIZE);
+ if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
+           for (int i = begin; i < (USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE; i++) {
+            if (myEnv->env_page_directory[i] == 0) {
+                count++;
+            if (count == numpages) {
+             for (int j = i - numpages + 1; j <= i; j++) {
+            	 myEnv->env_page_directory[j] = numpages;
+                        }
+                        uint32 add = USER_HEAP_START + (PAGE_SIZE * (i - numpages + 1));
+                        sys_allocate_user_mem(add, size);
+
+                        return (void*)add;
+                    }
+                } else {
+                    count = 0;
+                }
+            }
+        }
         return NULL;
     }
-uint32 upsize = ROUNDUP(size, PAGE_SIZE);
-void* addalloc = NULL;
-//el page allloc
-if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
-	addalloc = sys_sbrk(upsize);
-        if ((uint32)addalloc == -1) {
-            return NULL;
-        }
-    } else {
-    	addalloc = (void*)sys_sbrk(upsize);
-        if ((uint32)addalloc == -1) {
-            return NULL;
-        }
-        sys_allocate_user_mem((uint32)addalloc, upsize);
-    }
-
-    return addalloc;}
-	else {
-		cprintf("Not follwing fist fit strat");
-		return NULL;
-	}
 }
+
 
 //=================================
 // [3] FREE SPACE FROM USER HEAP:
