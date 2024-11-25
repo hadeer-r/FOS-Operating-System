@@ -20,15 +20,38 @@ void* malloc(uint32 size)
 {
 	//==============================================================
 	//DON'T CHANGE THIS CODE========================================
-	if (size == 0) return NULL ;
 	//==============================================================
 	//TODO: [PROJECT'24.MS2 - #12] [3] USER HEAP [USER SIDE] - malloc()
 	// Write your code here, remove the panic and write your code
-	panic("malloc() is not implemented yet...!!");
-	return NULL;
 	//Use sys_isUHeapPlacementStrategyFIRSTFIT() and	sys_isUHeapPlacementStrategyBESTFIT()
-	//to check the current strategy
+	//to check the current strateg
+if (sys_isUHeapPlacementStrategyFIRSTFIT()==1)//el doc kateb we should use it 
+{
+	//el block alloc
+    if (size == 0) {
+        return NULL;
+    }
+uint32 upsize = ROUNDUP(size, PAGE_SIZE);
+void* addalloc = NULL;
+//el page allloc
+if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
+	addalloc = sys_sbrk(upsize);
+        if ((uint32)addalloc == -1) {
+            return NULL;
+        }
+    } else {
+    	addalloc = (void*)sys_sbrk(upsize);
+        if ((uint32)addalloc == -1) {
+            return NULL;
+        }
+        sys_allocate_user_mem((uint32)addalloc, upsize);
+    }
 
+    return addalloc;}
+	else {
+		cprintf("Not follwing fist fit strat");
+		return NULL;
+	}
 }
 
 //=================================
