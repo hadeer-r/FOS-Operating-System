@@ -4,7 +4,8 @@
 #include <inc/dynamic_allocator.h>
 #include "memory_manager.h"
 uint32 Allocation_count = 0;
-
+#define totalpages ((KERNEL_HEAP_MAX - KERNEL_HEAP_START) / PAGE_SIZE)
+uint32 allocatesize[totalpages];
 //Initialize the dynamic allocator of kernel heap with the given start address, size & limit
 //All pages in the given range should be allocated
 //Remember: call the initialize_dynamic_allocator(..) to complete the initialization
@@ -94,80 +95,69 @@ void* sbrk(int numOfPages)
 //TODO: [PROJECT'24.MS2 - BONUS#2] [1] KERNEL HEAP - Fast Page Allocator
 
 
-#define totalpages ((KERNEL_HEAP_MAX - KERNEL_HEAP_START) / PAGE_SIZE)
-uint32 allocatesize[totalpages];
+
 
 void* kmalloc(unsigned int size) {
-    // Round up the size to the nearest page size
-    unsigned int roundedSize = ROUNDUP(size, PAGE_SIZE);
-    unsigned int numPages = roundedSize / PAGE_SIZE;
-
-    // If size is within the block allocator range
+    unsigned int upsize = ROUNDUP(size, PAGE_SIZE); //3shan page size
+    unsigned int numpages = upsize / PAGE_SIZE;
+ //cprintf("================== test block allocator range=================");
     if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
         return alloc_block_FF(size);
     }
-    // For allocations larger than the block allocator size, use page allocator
-
-        uint32 startAddress = limit + PAGE_SIZE;
-        uint32 endAddress = KERNEL_HEAP_MAX;
-        uint32 currentAddress = startAddress;
-
-        // First Fit Strategy
-        uint32 freeSpaceStart = 0; // To track the start of the free space
+//cprintf ("======================test page allocator ===========")
+        uint32 staradd = limit + PAGE_SIZE;
+        uint32 endadd = KERNEL_HEAP_MAX;
+        uint32 curr = staradd;
+        uint32 FS = 0; //awel el  free space
         unsigned int consecutivePages = 0;
-        if(numPages>LIST_SIZE(&MemFrameLists.free_frame_list)) return NULL;
-        while (currentAddress < endAddress) {
-            uint32* pageTable;
-            struct FrameInfo* frameInfo = get_frame_info(ptr_page_directory, currentAddress, &pageTable);
+        if(numpages>LIST_SIZE(&MemFrameLists.free_frame_list)) {
+        	return NULL;
+        }
+        while (curr < endadd) {
+            uint32* pagetable;
+            struct FrameInfo* FI = get_frame_info(ptr_page_directory, curr, &pagetable); //frameinfo
 //            cprintf("=========page directory now : %p, page directory Index:%d\n",ptr_page_directory, PDX(ptr_page_directory));
-            if (frameInfo == NULL) {
-                // Found an empty frame
-                if (consecutivePages == 0) {
-                    freeSpaceStart = currentAddress; // Mark the start of the free space
+            if (FI == NULL) {
+//cprintf("ttttttttttttttttt freeframetttttttttttttttttt");
+            	if (consecutivePages == 0) {
+                	FS = curr; // Mark the start of the free space
                 }
                 consecutivePages++;
             } else {
-                // Reset if allocation fails to find sufficient space
-                consecutivePages = 0;
+
+            	consecutivePages = 0;
             }
+// cprintf("tttttttttttttttttt map frame ttttttttttttt");
+            if (consecutivePages == numpages) {
+                uint32 address = FS;
+                frame_array[Allocation_count].num_of_frames=numpages;
+                frame_array[Allocation_count].virtual_adress=(void*)FS;
 
-            // If enough space is found, allocate and map the pages
-            if (consecutivePages >= numPages) {
-                uint32 address = freeSpaceStart;
-
-                for (unsigned int i = 0; i < numPages; i++) {
+                for (unsigned int i = 0; i < numpages; i++) {
                     struct FrameInfo* frame;
                     int result = allocate_frame(&frame);
-
-//                    if (result != 0) {
-//                        // Cleanup allocated frames on failure
-////                        for (unsigned int j = 0; j < i; j++) {
-////                            unmap_frame(ptr_page_directory, freeSpaceStart + (j * PAGE_SIZE));
-////                        }
-//                        return NULL; // Allocation failed
-//                    }
-                    frame->bufferedVA=address;
+                    if (result != 0) {
+//                        for (unsigned int j = 0; j < i; j++) {
+//                            unmap_frame(ptr_page_directory, freeSpaceStart + (j * PAGE_SIZE));
+//                        }
+                        return NULL;
+                    }
                     map_frame(ptr_page_directory, frame, address, PERM_WRITEABLE | PERM_PRESENT);
                     address += PAGE_SIZE;
                 }
-
-                // Mark the allocated space in the tracking array
-                for (unsigned int i = 0; i < numPages; i++) {
-                    allocatesize[(freeSpaceStart + i * PAGE_SIZE - KERNEL_HEAP_START) / PAGE_SIZE] = 1;
+                for (unsigned int i = 0; i < numpages; i++) {
+                    allocatesize[(FS + i * PAGE_SIZE - KERNEL_HEAP_START) / PAGE_SIZE] = 1;
                 }
-                frame_array[Allocation_count].num_of_frames=numPages;
-                frame_array[Allocation_count].virtual_adress=(void*)freeSpaceStart;
+                frame_array[Allocation_count].num_of_frames=numpages;
+                frame_array[Allocation_count].virtual_adress=(void*)FS;
                 Allocation_count++;
 
-                return (void*)freeSpaceStart;
+                return (void*)FS;
             }
 
-            currentAddress += PAGE_SIZE;
+            curr += PAGE_SIZE;
         }
 
-
-
-    // Allocation failed
     return NULL;
 }
 
@@ -264,16 +254,17 @@ unsigned int kheap_virtual_address(unsigned int physical_address)
 	//panic("kheap_virtual_address() is not implemented yet...!!");
     struct FrameInfo* ff = to_frame_info(physical_address);
 
-    if (ff==NULL || ff->references == 0)
+    if (ff == NULL || ff->references == 0)
     {
         return 0;
     }
-
-    uint32 virtual_address = (ff->bufferedVA & 0xFFFFF000) | (physical_address & 0x00000FFF);
-    if(physical_address== 0Xffff000){
-    	return 0xf6000000;
+    else{
+    	if (frame_array[to_frame_number(ff)].virtual_adress!=NULL){
+    		return ((uint32)frame_array[to_frame_number(ff)].virtual_adress + (physical_address & 0x00000FFF));
+    	}else{
+    		return 0;
+    	}
     }
-    return virtual_address;
 
 }
 //=================================================================================//
