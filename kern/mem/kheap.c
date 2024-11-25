@@ -228,20 +228,19 @@ unsigned int kheap_physical_address(unsigned int virtual_address)
 {
 	//TODO: [PROJECT'24.MS2 - #05] [1] KERNEL HEAP - kheap_physical_address
 	// Write your code here, remove the panic and write your code
-	panic("kheap_physical_address() is not implemented yet...!!");
 	//panic("kheap_physical_address() is not implemented yet...!!");
     uint32 *ptr_page_table;
+
     get_page_table(ptr_page_directory, virtual_address, &ptr_page_table);
 
-	//return the physical address corresponding to given virtual_address
-	//refer to the project presentation and documentation for details
 
-	//EFFICIENT IMPLEMENTATION ~O(1) IS REQUIRED ==================
     if (!(ptr_page_table[PTX(virtual_address)] & PERM_PRESENT)) {
         return 0;
     }
+
     uint32 physical_address = ptr_page_table[PTX(virtual_address)] & 0xFFFFF000;
     return physical_address + (virtual_address & 0x00000FFF);
+
 }
 
 
@@ -252,8 +251,6 @@ unsigned int kheap_virtual_address(unsigned int physical_address)
 	//panic("kheap_virtual_address() is not implemented yet...!!");
     struct FrameInfo* ff = to_frame_info(physical_address);
 
-	//return the virtual address corresponding to given physical_address
-	//refer to the project presentation and documentation for details
     if (ff == NULL || ff->references == 0)
     {
         return 0;
@@ -265,6 +262,7 @@ unsigned int kheap_virtual_address(unsigned int physical_address)
     		return 0;
     	}
     }
+
 }
 //=================================================================================//
 //============================== BONUS FUNCTION ===================================//
