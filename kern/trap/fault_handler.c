@@ -124,7 +124,8 @@ void fault_handler(struct Trapframe *tf)
 	}
 
 	//get a pointer to the environment that caused the fault at runtime
-	//cprintf("curenv = %x\n", curenv);
+	cprintf("curenv = %x\n", cur_env);
+
 	struct Env* faulted_env = cur_env;
 	if (faulted_env == NULL)
 	{
@@ -151,6 +152,7 @@ void fault_handler(struct Trapframe *tf)
 			//TODO: [PROJECT'24.MS2 - #08] [2] FAULT HANDLER I - Check for invalid pointers
 						//(e.g. pointing to unmarked user heap page, kernel or wrong access rights),
 						//your code is here
+<<<<<<< HEAD
 						int validate_perm = pt_get_page_permissions(faulted_env->env_page_directory, fault_va);
 												if(fault_va >= USER_HEAP_START && fault_va < USER_HEAP_MAX){
 													if(!(validate_perm & PERM_MARKED)){
@@ -164,6 +166,21 @@ void fault_handler(struct Trapframe *tf)
 									            if(!(validate_perm & PERM_WRITEABLE)){
 													env_exit();
 									            }
+=======
+			int validate_perm = pt_get_page_permissions(faulted_env->env_page_directory, fault_va);
+						if(fault_va >= USER_HEAP_START && fault_va < USER_HEAP_MAX){
+							if(!(validate_perm & PERM_MARKED)){
+								env_exit();
+							}
+						}
+
+						if(fault_va >= KERNEL_STACK_SIZE){
+							env_exit();
+						}
+			            if(!(validate_perm & PERM_WRITEABLE)){
+							env_exit();
+			            }
+>>>>>>> system_calls/allocmem
 
 			/*============================================================================================*/
 		}
@@ -241,6 +258,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 				//TODO: [PROJECT'24.MS2 - #09] [2] FAULT HANDLER I - Placement
 				// Write your code here, remove the panic and write your code
 		//		panic("page_fault_handler().PLACEMENT is not implemented yet...!!");
+<<<<<<< HEAD
 				                struct FrameInfo *ptr_frame_info;
 						        int faulted_page = allocate_frame(&ptr_frame_info);
 						        if(faulted_page == E_NO_MEM){
@@ -273,6 +291,43 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 			}
 		//refer to the project presentation and documentation for details
 
+=======
+
+
+		        struct FrameInfo *ptr_frame_info;
+		        int faulted_page = allocate_frame(&ptr_frame_info);
+		        if(faulted_page == E_NO_MEM){
+		        	panic("no free frames exist");
+		        }
+		        int map_faulted_page = map_frame(faulted_env->env_page_directory,ptr_frame_info,fault_va,PERM_WRITEABLE | PERM_PRESENT);
+		        if(map_faulted_page == E_NO_MEM){
+		        	panic(" no page table found and there’s no free frame for creating it.");
+		        }
+
+				int read = pf_read_env_page(faulted_env,(void *)fault_va);
+		    	if(read == E_PAGE_NOT_EXIST_IN_PF){
+		    		if((fault_va < USER_HEAP_START && fault_va >= USER_HEAP_MAX) ||
+		    		(fault_va < (KERN_STACK_TOP - KERNEL_STACK_SIZE) && fault_va >= KERN_STACK_TOP))
+		    		{
+		    			env_exit();
+		   		     }
+		    }
+		    	struct WorkingSetElement*new_element = env_page_ws_list_create_element(faulted_env, fault_va) ;
+                if(faulted_env->page_last_WS_element == NULL){
+                	LIST_INSERT_TAIL(&(faulted_env->page_WS_list), new_element);
+                	if (wsSize >= faulted_env->page_WS_max_size) {
+		    	        faulted_env->page_last_WS_element = LIST_FIRST(&(faulted_env->page_WS_list));
+		    	    }
+
+                }
+                else{
+                	LIST_REMOVE(&(faulted_env->page_WS_list),LIST_FIRST(&(faulted_env->page_WS_list)));
+                	LIST_INSERT_TAIL(&(faulted_env->page_WS_list), new_element);
+                }
+
+				//refer to the project presentation and documentation for details
+			}
+>>>>>>> system_calls/allocmem
 	else
 	{
 		//cprintf("REPLACEMENT=========================WS Size = %d\n", wsSize );
