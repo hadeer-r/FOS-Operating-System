@@ -77,7 +77,37 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 	//==============================================================
 	//TODO: [PROJECT'24.MS2 - #18] [4] SHARED MEMORY [USER SIDE] - smalloc()
 	// Write your code here, remove the panic and write your code
-	panic("smalloc() is not implemented yet...!!");
+//	panic("smalloc() is not implemented yet...!!");
+
+	uint32 upsize = ROUNDUP(size, PAGE_SIZE);
+	uint32 numpages = upsize / PAGE_SIZE;
+	int count = 0;
+
+	uint32 start =USER_HEAP_START;
+	uint32 end = USER_HEAP_MAX;
+
+	uint32 s_space=0;
+	while(start<end){
+		if(myEnv->env_page_directory==NULL) {
+			count++;
+			if(count==1){
+				s_space=start;
+			}
+		}
+		else {
+			count=0;
+			continue;
+		}
+
+		if(count==numpages){
+
+			//(char* shareName, uint32 size, uint8 isWritable, void* virtual_address)
+			return (void*) sys_createSharedObject(sharedVarName,size,isWritable,(void*)s_space);
+		}
+		start+=PAGE_SIZE;
+
+	}
+
 	return NULL;
 }
 

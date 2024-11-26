@@ -183,7 +183,7 @@ void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 
 	//TODO: [PROJECT'24.MS2 - #13] [3] USER HEAP [KERNEL SIDE] - allocate_user_mem()
 	// Write your code here, remove the panic and write your code
-	panic("allocate_user_mem() is not implemented yet...!!");
+//	panic("allocate_user_mem() is not implemented yet...!!");
 }
 
 //=====================================
