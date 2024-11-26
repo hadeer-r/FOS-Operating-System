@@ -17,6 +17,10 @@ uint32 _KHeapPlacementStrategy;
 #define KHP_PLACE_NEXTFIT 	0x3
 #define KHP_PLACE_WORSTFIT 	0x4
 
+
+#define MaX_F 1048576
+
+
 static inline void setKHeapPlacementStrategyCONTALLOC(){_KHeapPlacementStrategy = KHP_PLACE_CONTALLOC;}
 static inline void setKHeapPlacementStrategyFIRSTFIT(){_KHeapPlacementStrategy = KHP_PLACE_FIRSTFIT;}
 static inline void setKHeapPlacementStrategyBESTFIT(){_KHeapPlacementStrategy = KHP_PLACE_BESTFIT;}
@@ -43,7 +47,8 @@ struct MemoryFrame {
     void* virtual_adress;
     uint32 num_of_frames;
 };
-struct MemoryFrame frame_array[1048576];
+
+struct MemoryFrame frame_array[MaX_F];
 
 //TODO: [PROJECT'24.MS2 - #01] [1] KERNEL HEAP - add suitable code here
 

@@ -77,7 +77,7 @@ void* sget(int32 ownerEnvID, char *sharedVarName)
 //		else
 //			return NULL;
 //	}else
-//		return NULL;
+   return NULL;
 }
 
 
