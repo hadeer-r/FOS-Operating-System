@@ -193,7 +193,7 @@ void kfree(void* virtual_address)
 
 			    	n_pages = frame_array[i].num_of_frames;
 			    	frame_array[i].num_of_frames = 0;
-//			    	frame_array[i].virtual_adress = NULL;
+			    	frame_array[i].virtual_adress = NULL;
 			    	break;
 
 			}
@@ -263,8 +263,7 @@ unsigned int kheap_virtual_address(unsigned int physical_address)
     	}
     }
 
-}
-//=================================================================================//
+}//=================================================================================//
 //============================== BONUS FUNCTION ===================================//
 //=================================================================================//
 // krealloc():

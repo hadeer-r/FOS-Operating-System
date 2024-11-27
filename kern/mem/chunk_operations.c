@@ -11,6 +11,7 @@
 #include "kheap.h"
 #include "memory_manager.h"
 #include <inc/queue.h>
+#include <inc/mmu.h>
 
 //extern void inctst();
 
@@ -120,8 +121,7 @@ uint32 calculate_required_frames(uint32* page_directory, uint32 sva, uint32 size
 //=====================================
 /* DYNAMIC ALLOCATOR SYSTEM CALLS */
 //=====================================
-void* sys_sbrk(int numOfPages)
-{
+void* sys_sbrk(int numOfPages) {
 	/* numOfPages > 0: move the segment break of the current user program to increase the size of its heap
 	 * 				by the given number of pages. You should allocate NOTHING,
 	 * 				and returns the address of the previous break (i.e. the beginning of newly mapped memory).
@@ -137,31 +137,68 @@ void* sys_sbrk(int numOfPages)
 	 */
 
 	//TODO: [PROJECT'24.MS2 - #11] [3] USER HEAP - sys_sbrk
-	/*====================================*/
-	/*Remove this line before start coding*/
-	return (void*)-1 ;
-	/*====================================*/
-	struct Env* env = get_cpu_proc(); //the current running Environment to adjust its break limit
+	// how to get current user?
+	struct Env* env = get_cpu_proc();
+	if (numOfPages == 0)
+		return (void*) env->u_break;
+	else {
+		uint32 needed_break = env->u_break + ((uint32) numOfPages) * PAGE_SIZE;
+		if (needed_break > env->u_limit)
+			return (void*) -1;
 
+		if (numOfPages > LIST_SIZE(&MemFrameLists.free_frame_list))
+			return (void*) -1;
 
+		uint32 prev_break = env->u_break;
+		env->u_break = needed_break; //needed_break;
+
+		return (void*) prev_break;
+
+	}
+
+	/*====================================*/
+	//the current running Environment to adjust its break limit
 }
 
 //=====================================
 // 1) ALLOCATE USER MEMORY:
 //=====================================
-void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
-{
-	/*====================================*/
-	/*Remove this line before start coding*/
-//	inctst();
-//	return;
-	/*====================================*/
+ void allocate_user_mem(struct Env* e, uint32 va, uint32 size) {
+        //=====================================
+        /*====================================*/
+            /*Remove this line before start coding*/
+        //    inctst();
+        //    return;
+            /*====================================*/
 
-	//TODO: [PROJECT'24.MS2 - #13] [3] USER HEAP [KERNEL SIDE] - allocate_user_mem()
-	// Write your code here, remove the panic and write your code
-	panic("allocate_user_mem() is not implemented yet...!!");
-}
+            //TODO: [PROJECT'24.MS2 - #13] [3] USER HEAP [KERNEL SIDE] - allocate_user_mem()
+            // Write your code here, remove the panic and write your code
+            //panic("allocate_user_mem() is not implemented yet...!!");
+        uint32 end_va = va + size;
+        uint32 curr_va = ROUNDDOWN(va,PAGE_SIZE) ;
+        end_va = ROUNDUP(end_va,PAGE_SIZE);
+uint32 * ptr_page_table ;
+        while (curr_va < end_va) {
 
+            create_page_table(e->env_page_directory, curr_va);
+
+
+            uint32 *page_table;
+            get_page_table(e->env_page_directory, curr_va,&page_table);
+            if (page_table == (uint32*)TABLE_NOT_EXIST) {
+                panic("Failed to create or retrieve the page table!");
+            }
+
+
+            uint32 page_entry = PTX(curr_va);
+
+
+            page_table[page_entry] = PERM_MARKED;
+
+
+            curr_va += PAGE_SIZE;
+        }
+    }
 //=====================================
 // 2) FREE USER MEMORY:
 //=====================================
