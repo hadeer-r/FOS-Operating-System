@@ -124,7 +124,7 @@ void fault_handler(struct Trapframe *tf)
 	}
 
 	//get a pointer to the environment that caused the fault at runtime
-	cprintf("curenv = %x\n", cur_env);
+//	cprintf("curenv = %x\n", cur_env);
 
 	struct Env* faulted_env = cur_env;
 	if (faulted_env == NULL)
@@ -261,18 +261,14 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 		        if(map_faulted_page == E_NO_MEM){
 		        	panic(" no page table found and there�s no free frame for creating it.");
 		        }
-                cprintf("map_faulted_page == E_NO_MEM ");
-                // Read the page from the page file
+//                cprintf("map_faulted_page == E_NO_MEM ");
                     int read = pf_read_env_page(faulted_env, (void *)fault_va);
                     if (read == E_PAGE_NOT_EXIST_IN_PF) {
-                        // Check if the faulted address is within the heap or stack range
                         if ((fault_va >= USER_HEAP_START && fault_va < USER_HEAP_MAX) ||
                             (fault_va >= USTACKBOTTOM && fault_va < USTACKTOP)) {
-                            // If it's valid, continue
-                            cprintf("it is a stack or a heap page, then, it�s OK., continue...\n");
+//                            cprintf("it is a stack or a heap page, then, it�s OK., continue...\n");
 
                         } else {
-                            // If it's invalid, exit the process
 //                            cprintf("Invalid access to va=%x. Exiting process...\n", fault_va);
                             env_exit();
                         }

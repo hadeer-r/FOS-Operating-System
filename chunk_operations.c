@@ -150,42 +150,41 @@ void* sys_sbrk(int numOfPages)
 //=====================================
 // 1) ALLOCATE USER MEMORY:
 //=====================================
-void allocate_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
-{
-	 uint32 end_va = virtual_address + size;
-	 uint32 current_va = virtual_address;
-	end_va = ROUNDUP(end_va,PAGE_SIZE);
-	current_va = ROUNDDOWN(current_va,PAGE_SIZE);
-	uint32 *ptr_page_table;
-	uint32 page_entry ;
-	int found ;
-	while (current_va<end_va)
-	{
-		found = get_page_table(ptr_page_directory,current_va , &ptr_page_table);
-		if (found == TABLE_NOT_EXIST)
-		{
-			ptr_page_table=create_page_table(e->env_page_directory,current_va);
-		}
-		page_entry = PTX(current_va);
-		ptr_page_table[page_entry]= PERM_MARKED;
+ void allocate_user_mem(struct Env* e, uint32 va, uint32 size) {
+        //=====================================
+        /*====================================*/
+            /*Remove this line before start coding*/
+        //    inctst();
+        //    return;
+            /*====================================*/
 
-		current_va = current_va +PAGE_SIZE;
-	}
+            //TODO: [PROJECT'24.MS2 - #13] [3] USER HEAP [KERNEL SIDE] - allocate_user_mem()
+            // Write your code here, remove the panic and write your code
+            //panic("allocate_user_mem() is not implemented yet...!!");
+        uint32 end_va = va + size;
+        uint32 curr_va = ROUNDDOWN(va,PAGE_SIZE) ;
+        end_va = ROUNDUP(end_va,PAGE_SIZE);
+uint32 * ptr_page_table ;
+        while (curr_va < end_va) {
+
+            create_page_table(e->env_page_directory, curr_va);
 
 
-	/*====================================*/
-	/*Remove this line before start coding*/
+            uint32 *page_table = get_page_table(e->env_page_directory, curr_va,&ptr_page_table);
+            if (page_table == TABLE_NOT_EXIST) {
+                panic("Failed to create or retrieve the page table!");
+            }
 
 
-//	inctst();
-//	return;
-	/*====================================*/
+            uint32 page_entry = PTX(curr_va);
 
-	//TODO: [PROJECT'24.MS2 - #13] [3] USER HEAP [KERNEL SIDE] - allocate_user_mem()
-	// Write your code here, remove the panic and write your code
-//	panic("allocate_user_mem() is not implemented yet...!!");
-}
 
+            page_table[page_entry] = PERM_MARKED;
+
+
+            curr_va += PAGE_SIZE;
+        }
+    }
 //=====================================
 // 2) FREE USER MEMORY:
 //=====================================
