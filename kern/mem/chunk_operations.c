@@ -130,7 +130,7 @@ void* sys_sbrk(int numOfPages) {
 	 * NOTES:
 	 * 	1) As in real OS, allocate pages lazily. While sbrk moves the segment break, pages are not allocated
 	 * 		until the user program actually tries to access data in its heap (i.e. will be allocated via the fault handler).
-	 * 	2) Allocating additional pages for a process’ heap will fail if, for example, the free frames are exhausted
+	 * 	2) Allocating additional pages for a processâ€™ heap will fail if, for example, the free frames are exhausted
 	 * 		or the break exceed the limit of the dynamic allocator. If sys_sbrk fails, the net effect should
 	 * 		be that sys_sbrk returns (void*) -1 and that the segment break and the process heap are unaffected.
 	 * 		You might have to undo any operations you have done so far in this case.
@@ -202,20 +202,36 @@ uint32 * ptr_page_table ;
 //=====================================
 // 2) FREE USER MEMORY:
 //=====================================
-void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
-{
-	/*====================================*/
-	/*Remove this line before start coding*/
-//	inctst();
-//	return;
-	/*====================================*/
+void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
+    //TODO: [PROJECT'24.MS2 - #15] [3] USER HEAP [KERNEL SIDE] - free_user_mem
+    // Write your code here, remove the panic and write your code
+    //panic("free_user_mem() is not implemented yet...!!");
 
-	//TODO: [PROJECT'24.MS2 - #15] [3] USER HEAP [KERNEL SIDE] - free_user_mem
-	// Write your code here, remove the panic and write your code
-	panic("free_user_mem() is not implemented yet...!!");
+    for (uint32 i = virtual_address; i < virtual_address + size; i += PAGE_SIZE) {
+        uint32 *page;
+        int ret = get_page_table(e->env_page_directory, i, &page);
+        if (!ret) {
+            page[PTX(i)] &= ~PERM_AVAILABLE;  // Mark page as unavailable
+        }
 
+        unmap_frame(e->env_page_directory, i);  // Unmap the frame
+        env_page_ws_invalidate(e, i);  // Invalidate the page in the working set
+    }
 
-	//TODO: [PROJECT'24.MS2 - BONUS#3] [3] USER HEAP [KERNEL SIDE] - O(1) free_user_mem
+    if (isPageReplacmentAlgorithmFIFO()) {
+        if (e->page_last_WS_element != NULL) {
+            struct WorkingSetElement *i = NULL;
+            LIST_FOREACH(i, &e->page_WS_list) {
+                if (i == e->page_last_WS_element)
+                    break;
+
+                LIST_REMOVE(&e->page_WS_list, i);
+                LIST_INSERT_TAIL(&e->page_WS_list, i);
+            }
+        }
+    }
+
+    e->page_last_WS_element = NULL;
 }
 
 //=====================================
