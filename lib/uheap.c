@@ -1,5 +1,10 @@
 #include <inc/lib.h>
-
+typedef struct PageMetadata {
+    bool is_marked; // True if the page is marked as reserved
+    uint32 size;    // Size of the allocation in bytes
+} PageMetadata;
+#define TOTAL_PAGES ((USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE)
+PageMetadata user_heap_metadata[TOTAL_PAGES];
 //==================================================================================//
 //============================ REQUIRED FUNCTIONS ==================================//
 //==================================================================================//
@@ -25,34 +30,47 @@ void* malloc(uint32 size)
 	// Write your code here, remove the panic and write your code
 	//Use sys_isUHeapPlacementStrategyFIRSTFIT() and	sys_isUHeapPlacementStrategyBESTFIT()
 	//to check the current strateg
- if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
+    if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
         return alloc_block_FF(size);
-    } else {
-        uint32 upsize = ROUNDUP(size, PAGE_SIZE);
-        uint32 numpages = upsize / PAGE_SIZE;
-        int count = 0;
-        uint32 begin = (USER_HEAP_START / PAGE_SIZE);
- if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
-           for (int i = begin; i < (USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE; i++) {
-            if (myEnv->env_page_directory[i] == 0) {
-                count++;
-            if (count == numpages) {
-             for (int j = i - numpages + 1; j <= i; j++) {
-            	 myEnv->env_page_directory[j] = numpages;
-                        }
-                        uint32 add = USER_HEAP_START + (PAGE_SIZE * (i - numpages + 1));
-                        sys_allocate_user_mem(add, size);
+    }
+    uint32 aligned_size = ROUNDUP(size, PAGE_SIZE);
+    uint32 num_pages = aligned_size / PAGE_SIZE;
 
-                        return (void*)add;
+    uint32 consecutive_free = 0;
+    uint32 start_page = 0;
+cprintf("===============1==========");
+	if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
+    	cprintf("===============2==========");
+        for (uint32 i = 0; i < (USER_HEAP_MAX - USER_HEAP_START)/PAGE_SIZE; i++) {
+        cprintf("===============3==========");
+            if (!user_heap_metadata[i].is_marked) { 
+                if (consecutive_free == 0) {
+                    start_page = i; 
+                }cprintf("===============4==========");
+                consecutive_free++;
+                if (consecutive_free == num_pages) {
+                    uint32 start_va = myEnv->u_limit+PAGE_SIZE; 
+                    cprintf("==============5===========%x\n", start_va);
+
+                    sys_allocate_user_mem(start_va, aligned_size);
+                    cprintf("==============6===========%x\n", start_va);
+                    for (uint32 j = start_page; j < start_page + num_pages; j++) {
+                        user_heap_metadata[j / PAGE_SIZE].is_marked = 1;
+                        user_heap_metadata[j / PAGE_SIZE].size = aligned_size;
                     }
-                } else {
-                    count = 0;
+                    myEnv->u_limit = start_va + aligned_size;
+
+                    return (void*)start_va;
                 }
+            } else {
+                consecutive_free = 0;
             }
         }
-        return NULL;
     }
+
+    return NULL;
 }
+
 
 
 //=================================
