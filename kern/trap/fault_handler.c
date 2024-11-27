@@ -259,7 +259,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
 		        int map_faulted_page = map_frame(faulted_env->env_page_directory,ptr_frame_info,fault_va,PERM_WRITEABLE |PERM_PRESENT | PERM_USER | PERM_MARKED);
 //		        cprintf("map_faulted_page  ");
 		        if(map_faulted_page == E_NO_MEM){
-		        	panic(" no page table found and there’s no free frame for creating it.");
+		        	panic(" no page table found and thereï¿½s no free frame for creating it.");
 		        }
                 cprintf("map_faulted_page == E_NO_MEM ");
                 // Read the page from the page file
@@ -269,7 +269,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va)
                         if ((fault_va >= USER_HEAP_START && fault_va < USER_HEAP_MAX) ||
                             (fault_va >= USTACKBOTTOM && fault_va < USTACKTOP)) {
                             // If it's valid, continue
-                            cprintf("it is a stack or a heap page, then, it’s OK., continue...\n");
+                            cprintf("it is a stack or a heap page, then, itï¿½s OK., continue...\n");
 
                         } else {
                             // If it's invalid, exit the process

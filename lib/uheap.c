@@ -20,16 +20,40 @@ void* malloc(uint32 size)
 {
 	//==============================================================
 	//DON'T CHANGE THIS CODE========================================
-	if (size == 0) return NULL ;
 	//==============================================================
 	//TODO: [PROJECT'24.MS2 - #12] [3] USER HEAP [USER SIDE] - malloc()
 	// Write your code here, remove the panic and write your code
-	panic("malloc() is not implemented yet...!!");
-	return NULL;
 	//Use sys_isUHeapPlacementStrategyFIRSTFIT() and	sys_isUHeapPlacementStrategyBESTFIT()
-	//to check the current strategy
+	//to check the current strateg
+ if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
+        return alloc_block_FF(size);
+    } else {
+        uint32 upsize = ROUNDUP(size, PAGE_SIZE);
+        uint32 numpages = upsize / PAGE_SIZE;
+        int count = 0;
+        uint32 begin = (USER_HEAP_START / PAGE_SIZE);
+ if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
+           for (int i = begin; i < (USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE; i++) {
+            if (myEnv->env_page_directory[i] == 0) {
+                count++;
+            if (count == numpages) {
+             for (int j = i - numpages + 1; j <= i; j++) {
+            	 myEnv->env_page_directory[j] = numpages;
+                        }
+                        uint32 add = USER_HEAP_START + (PAGE_SIZE * (i - numpages + 1));
+                        sys_allocate_user_mem(add, size);
 
+                        return (void*)add;
+                    }
+                } else {
+                    count = 0;
+                }
+            }
+        }
+        return NULL;
+    }
 }
+
 
 //=================================
 // [3] FREE SPACE FROM USER HEAP:
@@ -53,7 +77,37 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 	//==============================================================
 	//TODO: [PROJECT'24.MS2 - #18] [4] SHARED MEMORY [USER SIDE] - smalloc()
 	// Write your code here, remove the panic and write your code
-	panic("smalloc() is not implemented yet...!!");
+//	panic("smalloc() is not implemented yet...!!");
+
+	uint32 upsize = ROUNDUP(size, PAGE_SIZE);
+	uint32 numpages = upsize / PAGE_SIZE;
+	int count = 0;
+
+	uint32 start =USER_HEAP_START;
+	uint32 end = USER_HEAP_MAX;
+
+	uint32 s_space=0;
+	while(start<end){
+		if(myEnv->env_page_directory==NULL) {
+			count++;
+			if(count==1){
+				s_space=start;
+			}
+		}
+		else {
+			count=0;
+			continue;
+		}
+
+		if(count==numpages){
+
+			//(char* shareName, uint32 size, uint8 isWritable, void* virtual_address)
+			return (void*) sys_createSharedObject(sharedVarName,size,isWritable,(void*)s_space);
+		}
+		start+=PAGE_SIZE;
+
+	}
+
 	return NULL;
 }
 
@@ -65,10 +119,10 @@ void* sget(int32 ownerEnvID, char *sharedVarName)
 	//TODO: [PROJECT'24.MS2 - #20] [4] SHARED MEMORY [USER SIDE] - sget()
 	// Write your code here, remove the panic and write your code
 //	panic("sget() is not implemented yet...!!");
-//	int size_shared_object = sys_getSizeOfSharedObject(ownerEnvID,sharedVarName);
-//		if(size_shared_object <= 0)
-//			return NULL;
-//	void* allocated_VA = smalloc(sharedVarName,size_shared_object,1);
+	int size_shared_object = sys_getSizeOfSharedObject(ownerEnvID,sharedVarName);
+		if(size_shared_object <= 0)
+			return NULL;
+	void* allocated_VA = smalloc(sharedVarName,size_shared_object,1);
 //	if(allocated_VA != NULL){
 //		void* shared_object = sys_getSharedObject(ownerEnvID,sharedVarName,allocated_VA);
 //		if(shared_object != NULL){
@@ -78,6 +132,7 @@ void* sget(int32 ownerEnvID, char *sharedVarName)
 //			return NULL;
 //	}else
    return NULL;
+
 }
 
 
