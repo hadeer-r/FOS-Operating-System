@@ -17,9 +17,9 @@ int initialize_kheap_dynamic_allocator(uint32 daStart, uint32 initSizeToAllocate
 	// Write your code here, remove the panic and write your code
 
 	//initialize_paging()??!
-//	cprintf("initcurdastart:%x\n",daStart ,"\n");
+
 	start=daStart;
-//	cprintf("initcurstart:%x\n",start ,"\n");
+
 	initSizeToAllocate=ROUNDUP(initSizeToAllocate,PAGE_SIZE);
 	uint32 needed_frames=initSizeToAllocate/PAGE_SIZE;
 	seg_break= start+initSizeToAllocate;
@@ -71,7 +71,7 @@ void* sbrk(int numOfPages)
 		int available_pages=available_size/PAGE_SIZE; // way 1*/
 		/*if(available_pages<numOfPages)
 					return (void*)-1 ;*/
-//		cprintf("curbreak:%x\n",seg_break ,"\n");
+
 		uint32 needed_break=seg_break+(( uint32)numOfPages)*PAGE_SIZE;
 		if(needed_break>limit) return (void*)-1 ;
 
@@ -86,7 +86,7 @@ void* sbrk(int numOfPages)
 			 	}
 		 uint32 prev_break=seg_break;
 		 seg_break=seg_break+(( uint32)numOfPages)*PAGE_SIZE; //needed_break;
-//		 cprintf("modbreak :%x\n",seg_break ,"\n");
+
 		 return (void*)prev_break;
 
 	}
