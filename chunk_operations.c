@@ -121,8 +121,7 @@ uint32 calculate_required_frames(uint32* page_directory, uint32 sva, uint32 size
 //=====================================
 /* DYNAMIC ALLOCATOR SYSTEM CALLS */
 //=====================================
-void* sys_sbrk(int numOfPages)
-{
+void* sys_sbrk(int numOfPages) {
 	/* numOfPages > 0: move the segment break of the current user program to increase the size of its heap
 	 * 				by the given number of pages. You should allocate NOTHING,
 	 * 				and returns the address of the previous break (i.e. the beginning of newly mapped memory).
@@ -138,13 +137,27 @@ void* sys_sbrk(int numOfPages)
 	 */
 
 	//TODO: [PROJECT'24.MS2 - #11] [3] USER HEAP - sys_sbrk
-	/*====================================*/
-	/*Remove this line before start coding*/
-	return (void*)-1 ;
-	/*====================================*/
-	struct Env* env = get_cpu_proc(); //the current running Environment to adjust its break limit
+	// how to get current user?
+	struct Env* env = get_cpu_proc();
+	if (numOfPages == 0)
+		return (void*) env->u_break;
+	else {
+		uint32 needed_break = env->u_break + ((uint32) numOfPages) * PAGE_SIZE;
+		if (needed_break > env->u_limit)
+			return (void*) -1;
 
+		if (numOfPages > LIST_SIZE(&MemFrameLists.free_frame_list))
+			return (void*) -1;
 
+		uint32 prev_break = env->u_break;
+		env->u_break = needed_break; //needed_break;
+
+		return (void*) prev_break;
+
+	}
+
+	/*====================================*/
+	//the current running Environment to adjust its break limit
 }
 
 //=====================================
