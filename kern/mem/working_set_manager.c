@@ -22,12 +22,14 @@ inline struct WorkingSetElement* env_page_ws_list_create_element(struct Env* e, 
 //	panic("env_page_ws_list_create_element is not implemented yet");
 	//Your Code is Here...
 	struct WorkingSetElement* new_object = (struct WorkingSetElement*)kmalloc(sizeof(struct WorkingSetElement));
+//	cprintf("WorkingSetElement* new_object  ");
 	if(new_object == NULL){
 		panic("allocated failed");
 	}
+//	cprintf("new_object == NULL  ");
 	new_object ->virtual_address = virtual_address;
-//	new_object->prev_next_info.le_prev = NULL;
-//	new_object->prev_next_info.le_next = NULL;
+//		cprintf("	new_object ->virtual_address = virtual_address;  ");
+
     return new_object;
 }
 inline void env_page_ws_invalidate(struct Env* e, uint32 virtual_address)
