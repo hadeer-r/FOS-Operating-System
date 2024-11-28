@@ -4,10 +4,10 @@ typedef struct PageMetadata {
     uint32 size;
 } PageMetadata;
 
-#define TOTAL_PAGES ((USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE)
-PageMetadata user_heap_metadata[TOTAL_PAGES];
+//#define TOTAL_PAGES ((USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE)
+//PageMetadata user_heap_metadata[TOTAL_PAGES];
 
-
+#define total ((USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE) + 100
 //==================================================================================//
 //============================ REQUIRED FUNCTIONS ==================================//
 //==================================================================================//
@@ -24,67 +24,47 @@ void* sbrk(int increment)
 //=================================
 // [2] ALLOCATE SPACE IN USER HEAP:
 //=================================
+bool marked[total], is_start[total];
+
+
 void* malloc(uint32 size) {
-    // If the requested size is less than or equal to the block size, use the dynamic block allocator
-    if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
-        return alloc_block_FF(size);
-    }
+	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
+		return alloc_block_FF(size);
+	}
+	size = ROUNDUP(size, PAGE_SIZE);
+	uint32 needed_pages = size / PAGE_SIZE;
 
-    // Align the requested size to the next page boundary
-    uint32 aligned_size = ROUNDUP(size, PAGE_SIZE);
-    uint32 num_pages = aligned_size / PAGE_SIZE;
+	uint32 seq = 0, count = 0, va;
+	uint32 start_page = myEnv->u_limit + PAGE_SIZE;
+	for (uint32 i = start_page; i < USER_HEAP_MAX; i += PAGE_SIZE) {
+		uint32 x = (i - start_page) / PAGE_SIZE;
+		if (marked[x]) {
+			count = 0;
+		} else {
+			if (!count)
+				va = i;
+			count++;
+		}
+		if (count >= needed_pages)
+			break;
+	}
 
-    uint32 consecutive_free = 0;
-    uint32 start_page = 0;
+	if (count >= needed_pages) {
+		uint32 y = (va - start_page) / PAGE_SIZE;
+		is_start[y] = 1;
 
-    // Start from the current limit of the user heap (myEnv->u_limit)
-    //uint32 begin = myEnv->u_limit;
-cprintf("===============1==========");
-    // First-Fit Allocation Strategy
-    if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
-    	//cprintf("===============2==========");
-        for (uint32 i = 0; i < (USER_HEAP_MAX - USER_HEAP_START)/PAGE_SIZE; i++) {
-       // cprintf("===============3==========");
-            if (!user_heap_metadata[i].is_marked) { // Check if the page is free
-                if (consecutive_free == 0) {
-                    start_page = i; // Mark the start of a free block
-                }//cprintf("===============4==========");
-                consecutive_free++;
+		for (uint32 i = y; i < y + needed_pages; i++) {
+			marked[i] = 1;
+		}
+		sys_allocate_user_mem((uint32)va,size);
+			return (void *)va;
 
-                // If enough consecutive free pages are found
-                if (consecutive_free == num_pages) {
-                    uint32 start_va = myEnv->u_limit+PAGE_SIZE; // Correct calculation of the start address
+	}
 
-                    // Reserve memory for the requested space
-                  //  cprintf("==============5===========%x\n", start_va);
-             sys_allocate_user_mem(start_va, aligned_size);
-                    //cprintf("==============6===========%x\n", start_va);
-                    // Update metadata for allocated pages
-             for (uint32 j = start_page; j < start_page + num_pages*PAGE_SIZE; j++) {
-                 user_heap_metadata[j].is_marked = 1;
-                 user_heap_metadata[j].size = aligned_size;
+	// No suitable block found
+	return NULL;
 
-                 // Print the updated metadata for debugging
-                 //cprintf("Page %d: is_marked = %d, size = %u bytes\n",j, user_heap_metadata[j].is_marked, user_heap_metadata[j].size);
-             }
-
-
-                    // Update the environment's heap limit to reflect the new end of the heap
-                    myEnv->u_limit = start_va + aligned_size;
-                    cprintf("==============10===========%x\n", start_va);
-                    return (void*)start_va; // Return the allocated virtual address
-                    cprintf("==============11===========%x\n", start_va);
-                }
-            } else {
-                consecutive_free = 0; // Reset count if a page is occupied
-            }
-        }
-    }
-
-    // No suitable block found
-    return NULL;
 }
-
 
 
 //=================================

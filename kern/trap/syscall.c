@@ -545,7 +545,7 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4, uin
 				return 0;
 				break;
 	case SYS_Allocate_User_Mem:
-			sys_free_user_mem(a1,a2);
+			sys_allocate_user_mem(a1,a2);
 					return 0;
 					break;
 	//======================================================================

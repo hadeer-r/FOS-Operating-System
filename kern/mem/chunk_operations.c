@@ -163,7 +163,7 @@ void* sys_sbrk(int numOfPages) {
 //=====================================
 // 1) ALLOCATE USER MEMORY:
 //=====================================
- void allocate_user_mem(struct Env* e, uint32 va, uint32 size) {
+void allocate_user_mem(struct Env* e, uint32 va, uint32 size) {
         //=====================================
         /*====================================*/
             /*Remove this line before start coding*/
@@ -171,34 +171,21 @@ void* sys_sbrk(int numOfPages) {
         //    return;
             /*====================================*/
 
-            //TODO: [PROJECT'24.MS2 - #13] [3] USER HEAP [KERNEL SIDE] - allocate_user_mem()
-            // Write your code here, remove the panic and write your code
-            //panic("allocate_user_mem() is not implemented yet...!!");
-        uint32 end_va = va + size;
-        uint32 curr_va = ROUNDDOWN(va,PAGE_SIZE) ;
-        end_va = ROUNDUP(end_va,PAGE_SIZE);
-uint32 * ptr_page_table ;
-        while (curr_va < end_va) {
+	//TODO: [PROJECT'24.MS2 - #13] [3] USER HEAP [KERNEL SIDE] - allocate_user_mem()
+	            // Write your code here, remove the panic and write your code
+//	            //panic("allocate_user_mem() is not implemented yet...!!");
+	    uint32 *ptr_page_table;
+		for(uint32 i = va ; i < va+size ; i += PAGE_SIZE)
+		{
+			int page_table = get_page_table(e->env_page_directory,i,&ptr_page_table);
+			 if (page_table == TABLE_NOT_EXIST)
+				                       {
 
-            create_page_table(e->env_page_directory, curr_va);
-
-
-            uint32 *page_table;
-            get_page_table(e->env_page_directory, curr_va,&page_table);
-            if (page_table == (uint32*)TABLE_NOT_EXIST) {
-                panic("Failed to create or retrieve the page table!");
-            }
-
-
-            uint32 page_entry = PTX(curr_va);
-
-
-            page_table[page_entry] = PERM_MARKED;
-
-
-            curr_va += PAGE_SIZE;
-        }
-    }
+				 ptr_page_table = create_page_table(e->env_page_directory,i);
+				                       }
+			 pt_set_page_permissions(e->env_page_directory, i, PERM_MARKED, 0);
+		}
+}
 //=====================================
 // 2) FREE USER MEMORY:
 //=====================================
@@ -207,37 +194,57 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 	//TODO: [PROJECT'24.MS2 - #15] [3] USER HEAP [KERNEL SIDE] - free_user_mem
 	// Write your code here, remove the panic and write your code
 	//panic("free_user_mem() is not implemented yet...!!");
-	
-	for(uint32 i = virtual_address ; i < virtual_address+size ; i += PAGE_SIZE)
-	{
-		
-		uint32 *page;
-		int ret = get_page_table(e->env_page_directory,i,&page);
-		if(!ret) page[PTX(i)] &= ~PERM_AVAILABLE;
-		
-		unmap_frame(e->env_page_directory,i);
-		env_page_ws_invalidate(e,i);
+	  for (uint32 i = virtual_address; i < virtual_address + size; i += PAGE_SIZE) {
+	        uint32 *ptr_page_table;
+	        int page_table = get_page_table(e->env_page_directory, i, &ptr_page_table);
+	        if (page_table == TABLE_IN_MEMORY) {
+				 pt_set_page_permissions(e->env_page_directory, i, 0, PERM_MARKED);
+	        }
 
-	}
-	if(isPageReplacmentAlgorithmFIFO())
-	{
-		if(e->page_last_WS_element!=NULL)
-		{
-			struct WorkingSetElement *i=NULL;
-			LIST_FOREACH(i,&e->page_WS_list)
-			{
-			    if(i==e->page_last_WS_element)
-					break;
+	//        unmap_frame(e->env_page_directory, i);  // Unmap the frame
+	//        env_page_ws_invalidate(e, i);  // Invalidate the page in the working set
+	        pf_remove_env_page(e,virtual_address);
+	    }
 
-				LIST_REMOVE(&e->page_WS_list,i);
-				LIST_INSERT_TAIL(&e->page_WS_list,i);
-			}
-		}
-	}
-		e->page_last_WS_element=NULL;
+	//    if (isPageReplacmentAlgorithmFIFO()) {
+	//        if (e->page_last_WS_element != NULL) {
+	            struct WorkingSetElement *ws = NULL;
+	            LIST_FOREACH(ws, &e->page_WS_list) {
+	                if (ws->virtual_address >= virtual_address && ws->virtual_address < virtual_address + size){
+	                          unmap_frame(e->env_page_directory,virtual_address)
+	                          LIST_REMOVE(&e->page_WS_list, ws);
+	            }
+	        }
+//	for(uint32 i = virtual_address ; i < virtual_address+size ; i += PAGE_SIZE)
+//	{
+//
+//		uint32 *page;
+//		int ret = get_page_table(e->env_page_directory,i,&page);
+//		if(!ret) page[PTX(i)] &= ~PERM_AVAILABLE;
+//
+//		unmap_frame(e->env_page_directory,i);
+//		env_page_ws_invalidate(e,i);
+//
+//	}
+//	if(isPageReplacmentAlgorithmFIFO())
+//	{
+//		if(e->page_last_WS_element!=NULL)
+//		{
+//			struct WorkingSetElement *i=NULL;
+//			LIST_FOREACH(i,&e->page_WS_list)
+//			{
+//			    if(i==e->page_last_WS_element)
+//					break;
+//
+//				LIST_REMOVE(&e->page_WS_list,i);
+//				LIST_INSERT_TAIL(&e->page_WS_list,i);
+//			}
+//		}
+//	}
+//		e->page_last_WS_element=NULL;
 
 
-	
+
 }
 //=====================================
 // 2) FREE USER MEMORY (BUFFERING):
