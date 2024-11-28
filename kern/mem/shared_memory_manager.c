@@ -62,13 +62,24 @@ int getSizeOfSharedObject(int32 ownerID, char* shareName)
 // [1] Create frames_storage:
 //===========================
 // Create the frames_storage and initialize it by 0
+// Create the frames_storage and initialize it by 0
 inline struct FrameInfo** create_frames_storage(int numOfFrames)
 {
 	//TODO: [PROJECT'24.MS2 - #16] [4] SHARED MEMORY - create_frames_storage()
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("create_frames_storage is not implemented yet");
+	//panic("create_frames_storage is not implemented yet");
 	//Your Code is Here...
+	static struct FrameInfo** storage_array[NUM_OF_UHEAP_PAGES];
 
+	if(numOfFrames > NUM_OF_UHEAP_PAGES || numOfFrames == 0){
+		return NULL;
+	}
+
+	for(int i = 0 ; i < numOfFrames ; i++){
+		storage_array[i] = 0;
+	}
+
+    return (struct FrameInfo**) storage_array;
 }
 
 //=====================================
