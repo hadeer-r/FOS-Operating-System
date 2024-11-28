@@ -1,10 +1,13 @@
 #include <inc/lib.h>
 typedef struct PageMetadata {
-    bool is_marked; // True if the page is marked as reserved
-    uint32 size;    // Size of the allocation in bytes
+    bool is_marked;
+    uint32 size;
 } PageMetadata;
+
 #define TOTAL_PAGES ((USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE)
 PageMetadata user_heap_metadata[TOTAL_PAGES];
+
+
 //==================================================================================//
 //============================ REQUIRED FUNCTIONS ==================================//
 //==================================================================================//
@@ -21,53 +24,64 @@ void* sbrk(int increment)
 //=================================
 // [2] ALLOCATE SPACE IN USER HEAP:
 //=================================
-void* malloc(uint32 size)
-{
-	//==============================================================
-	//DON'T CHANGE THIS CODE========================================
-	//==============================================================
-	//TODO: [PROJECT'24.MS2 - #12] [3] USER HEAP [USER SIDE] - malloc()
-	// Write your code here, remove the panic and write your code
-	//Use sys_isUHeapPlacementStrategyFIRSTFIT() and	sys_isUHeapPlacementStrategyBESTFIT()
-	//to check the current strateg
+void* malloc(uint32 size) {
+    // If the requested size is less than or equal to the block size, use the dynamic block allocator
     if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
         return alloc_block_FF(size);
     }
+
+    // Align the requested size to the next page boundary
     uint32 aligned_size = ROUNDUP(size, PAGE_SIZE);
     uint32 num_pages = aligned_size / PAGE_SIZE;
 
     uint32 consecutive_free = 0;
     uint32 start_page = 0;
+
+    // Start from the current limit of the user heap (myEnv->u_limit)
+    //uint32 begin = myEnv->u_limit;
 cprintf("===============1==========");
-	if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
-    	cprintf("===============2==========");
+    // First-Fit Allocation Strategy
+    if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
+    	//cprintf("===============2==========");
         for (uint32 i = 0; i < (USER_HEAP_MAX - USER_HEAP_START)/PAGE_SIZE; i++) {
-        cprintf("===============3==========");
-            if (!user_heap_metadata[i].is_marked) { 
+       // cprintf("===============3==========");
+            if (!user_heap_metadata[i].is_marked) { // Check if the page is free
                 if (consecutive_free == 0) {
-                    start_page = i; 
-                }cprintf("===============4==========");
+                    start_page = i; // Mark the start of a free block
+                }//cprintf("===============4==========");
                 consecutive_free++;
+
+                // If enough consecutive free pages are found
                 if (consecutive_free == num_pages) {
-                    uint32 start_va = myEnv->u_limit+PAGE_SIZE; 
-                    cprintf("==============5===========%x\n", start_va);
+                    uint32 start_va = myEnv->u_limit+PAGE_SIZE; // Correct calculation of the start address
 
-                    sys_allocate_user_mem(start_va, aligned_size);
-                    cprintf("==============6===========%x\n", start_va);
-                    for (uint32 j = start_page; j < start_page + num_pages; j++) {
-                        user_heap_metadata[j / PAGE_SIZE].is_marked = 1;
-                        user_heap_metadata[j / PAGE_SIZE].size = aligned_size;
-                    }
+                    // Reserve memory for the requested space
+                  //  cprintf("==============5===========%x\n", start_va);
+             sys_allocate_user_mem(start_va, aligned_size);
+                    //cprintf("==============6===========%x\n", start_va);
+                    // Update metadata for allocated pages
+             for (uint32 j = start_page; j < start_page + num_pages*PAGE_SIZE; j++) {
+                 user_heap_metadata[j].is_marked = 1;
+                 user_heap_metadata[j].size = aligned_size;
+
+                 // Print the updated metadata for debugging
+                 //cprintf("Page %d: is_marked = %d, size = %u bytes\n",j, user_heap_metadata[j].is_marked, user_heap_metadata[j].size);
+             }
+
+
+                    // Update the environment's heap limit to reflect the new end of the heap
                     myEnv->u_limit = start_va + aligned_size;
-
-                    return (void*)start_va;
+                    cprintf("==============10===========%x\n", start_va);
+                    return (void*)start_va; // Return the allocated virtual address
+                    cprintf("==============11===========%x\n", start_va);
                 }
             } else {
-                consecutive_free = 0;
+                consecutive_free = 0; // Reset count if a page is occupied
             }
         }
     }
 
+    // No suitable block found
     return NULL;
 }
 
