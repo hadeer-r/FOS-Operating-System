@@ -137,7 +137,6 @@ void set_block_data(void* va, uint32 totalSize, bool isAllocated) {
 
 	*footer = totalSize | isAllocated;
 
-
 }
 
 //=========================================
@@ -218,8 +217,9 @@ void *alloc_block_FF(uint32 size) {
 		if (address == (void*) -1)
 			return NULL;
 
-	    uint32* END_Block = (uint32*) ((uint32)address + new_size - sizeof(uint32));
-	    *END_Block = 0x1;
+		uint32* END_Block = (uint32*) ((uint32) address + new_size
+				- sizeof(uint32));
+		*END_Block = 0x1;
 
 		struct BlockElement*p = NULL;
 		if (LIST_SIZE(&(freeBlocksList)))
@@ -246,7 +246,7 @@ void *alloc_block_FF(uint32 size) {
 
 	}
 
-//	cprintf("Done :%d\n", 10, "\n");
+	cprintf("blk :%x\n", blk, "\n");
 
 	return (void *) blk;
 }

@@ -929,7 +929,7 @@ void initialize_uheap_dynamic_allocator(struct Env* e, uint32 daStart, uint32 da
 	e->u_start=daStart;
 	e->u_break=daStart+0;
 	e->u_limit=daLimit;
-	 initialize_dynamic_allocator(start,0);
+	 initialize_dynamic_allocator(e->u_start,0);
 	 return;
 
 }

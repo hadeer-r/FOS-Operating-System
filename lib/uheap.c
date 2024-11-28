@@ -1,12 +1,5 @@
 #include <inc/lib.h>
-typedef struct PageMetadata {
-    bool is_marked;
-    uint32 size;
-} PageMetadata;
-
-#define TOTAL_PAGES ((USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE)
-PageMetadata user_heap_metadata[TOTAL_PAGES];
-
+#define total ((USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE) + 3
 
 //==================================================================================//
 //============================ REQUIRED FUNCTIONS ==================================//
@@ -16,96 +9,78 @@ PageMetadata user_heap_metadata[TOTAL_PAGES];
 // [1] CHANGE THE BREAK LIMIT OF THE USER HEAP:
 //=============================================
 /*2023*/
-void* sbrk(int increment)
-{
+void* sbrk(int increment) {
 	return (void*) sys_sbrk(increment);
 }
 
 //=================================
 // [2] ALLOCATE SPACE IN USER HEAP:
 //=================================
+
+bool marked[total], is_start[total];
+
 void* malloc(uint32 size) {
-    // If the requested size is less than or equal to the block size, use the dynamic block allocator
-    if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
-        return alloc_block_FF(size);
-    }
+	if(size==0) return NULL;
+	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
 
-    // Align the requested size to the next page boundary
-    uint32 aligned_size = ROUNDUP(size, PAGE_SIZE);
-    uint32 num_pages = aligned_size / PAGE_SIZE;
+		return alloc_block_FF(size);
+	}
+	if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
+		size = ROUNDUP(size, PAGE_SIZE);
+		uint32 needed_pages = size / PAGE_SIZE;
 
-    uint32 consecutive_free = 0;
-    uint32 start_page = 0;
+		uint32 count = 0, va;
+		uint32 start_page = myEnv->u_limit + PAGE_SIZE;
+		for (uint32 i = start_page; i < USER_HEAP_MAX; i += PAGE_SIZE) {
+			uint32 x = (i -start_page ) / PAGE_SIZE;
+			if (marked[x]) {
+				count = 0;
+			} else {
+				if (!count)
+					va = i;
+				count++;
+			}
+			if (count >= needed_pages)
+				break;
+		}
 
-    // Start from the current limit of the user heap (myEnv->u_limit)
-    //uint32 begin = myEnv->u_limit;
-cprintf("===============1==========");
-    // First-Fit Allocation Strategy
-    if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
-    	//cprintf("===============2==========");
-        for (uint32 i = 0; i < (USER_HEAP_MAX - USER_HEAP_START)/PAGE_SIZE; i++) {
-       // cprintf("===============3==========");
-            if (!user_heap_metadata[i].is_marked) { // Check if the page is free
-                if (consecutive_free == 0) {
-                    start_page = i; // Mark the start of a free block
-                }//cprintf("===============4==========");
-                consecutive_free++;
+		if (count >= needed_pages) {
+			uint32 y = (va - start_page) / PAGE_SIZE;
+			is_start[y] = 1;
 
-                // If enough consecutive free pages are found
-                if (consecutive_free == num_pages) {
-                    uint32 start_va = myEnv->u_limit+PAGE_SIZE; // Correct calculation of the start address
+			for (uint32 i = y; i < y + needed_pages; i++) {
+				marked[i] = 1;
+				//cprintf("p %d",i);
+			}
+			cprintf("add %x\n",va);
+			cprintf("sz %x\n",size);
+			sys_allocate_user_mem(va, size);
+			return (void *) va;
 
-                    // Reserve memory for the requested space
-                  //  cprintf("==============5===========%x\n", start_va);
-             sys_allocate_user_mem(start_va, aligned_size);
-                    //cprintf("==============6===========%x\n", start_va);
-                    // Update metadata for allocated pages
-             for (uint32 j = start_page; j < start_page + num_pages*PAGE_SIZE; j++) {
-                 user_heap_metadata[j].is_marked = 1;
-                 user_heap_metadata[j].size = aligned_size;
+		}
+	}
 
-                 // Print the updated metadata for debugging
-                 //cprintf("Page %d: is_marked = %d, size = %u bytes\n",j, user_heap_metadata[j].is_marked, user_heap_metadata[j].size);
-             }
-
-
-                    // Update the environment's heap limit to reflect the new end of the heap
-                    myEnv->u_limit = start_va + aligned_size;
-                    cprintf("==============10===========%x\n", start_va);
-                    return (void*)start_va; // Return the allocated virtual address
-                    cprintf("==============11===========%x\n", start_va);
-                }
-            } else {
-                consecutive_free = 0; // Reset count if a page is occupied
-            }
-        }
-    }
-
-    // No suitable block found
-    return NULL;
+	// No suitable block found
+	return NULL;
 }
-
-
 
 //=================================
 // [3] FREE SPACE FROM USER HEAP:
 //=================================
-void free(void* virtual_address)
-{
+void free(void* virtual_address) {
 	//TODO: [PROJECT'24.MS2 - #14] [3] USER HEAP [USER SIDE] - free()
 	// Write your code here, remove the panic and write your code
 	panic("free() is not implemented yet...!!");
 }
 
-
 //=================================
 // [4] ALLOCATE SHARED VARIABLE:
 //=================================
-void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
-{
+void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable) {
 	//==============================================================
 	//DON'T CHANGE THIS CODE========================================
-	if (size == 0) return NULL ;
+	if (size == 0)
+		return NULL;
 	//==============================================================
 	//TODO: [PROJECT'24.MS2 - #18] [4] SHARED MEMORY [USER SIDE] - smalloc()
 	// Write your code here, remove the panic and write your code
@@ -115,28 +90,28 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 	uint32 numpages = upsize / PAGE_SIZE;
 	int count = 0;
 
-	uint32 start =USER_HEAP_START;
+	uint32 start = USER_HEAP_START;
 	uint32 end = USER_HEAP_MAX;
 
-	uint32 s_space=0;
-	while(start<end){
-		if(myEnv->env_page_directory==NULL) {
+	uint32 s_space = 0;
+	while (start < end) {
+		if (myEnv->env_page_directory == NULL) {
 			count++;
-			if(count==1){
-				s_space=start;
+			if (count == 1) {
+				s_space = start;
 			}
-		}
-		else {
-			count=0;
+		} else {
+			count = 0;
 			continue;
 		}
 
-		if(count==numpages){
+		if (count == numpages) {
 
 			//(char* shareName, uint32 size, uint8 isWritable, void* virtual_address)
-			return (void*) sys_createSharedObject(sharedVarName,size,isWritable,(void*)s_space);
+			return (void*) sys_createSharedObject(sharedVarName, size,
+					isWritable, (void*) s_space);
 		}
-		start+=PAGE_SIZE;
+		start += PAGE_SIZE;
 
 	}
 
@@ -146,15 +121,15 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 //========================================
 // [5] SHARE ON ALLOCATED SHARED VARIABLE:
 //========================================
-void* sget(int32 ownerEnvID, char *sharedVarName)
-{
+void* sget(int32 ownerEnvID, char *sharedVarName) {
 	//TODO: [PROJECT'24.MS2 - #20] [4] SHARED MEMORY [USER SIDE] - sget()
 	// Write your code here, remove the panic and write your code
 //	panic("sget() is not implemented yet...!!");
-	int size_shared_object = sys_getSizeOfSharedObject(ownerEnvID,sharedVarName);
-		if(size_shared_object <= 0)
-			return NULL;
-	void* allocated_VA = smalloc(sharedVarName,size_shared_object,1);
+	int size_shared_object = sys_getSizeOfSharedObject(ownerEnvID,
+			sharedVarName);
+	if (size_shared_object <= 0)
+		return NULL;
+	void* allocated_VA = smalloc(sharedVarName, size_shared_object, 1);
 //	if(allocated_VA != NULL){
 //		void* shared_object = sys_getSharedObject(ownerEnvID,sharedVarName,allocated_VA);
 //		if(shared_object != NULL){
@@ -163,10 +138,9 @@ void* sget(int32 ownerEnvID, char *sharedVarName)
 //		else
 //			return NULL;
 //	}else
-   return NULL;
+	return NULL;
 
 }
-
 
 //==================================================================================//
 //============================== BONUS FUNCTIONS ===================================//
@@ -183,13 +157,11 @@ void* sget(int32 ownerEnvID, char *sharedVarName)
 //	calls freeSharedObject(...) in "shared_memory_manager.c", then switch back to the user mode here
 //	the freeSharedObject() function is empty, make sure to implement it.
 
-void sfree(void* virtual_address)
-{
+void sfree(void* virtual_address) {
 	//TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [USER SIDE] - sfree()
 	// Write your code here, remove the panic and write your code
 	panic("sfree() is not implemented yet...!!");
 }
-
 
 //=================================
 // REALLOC USER SPACE:
@@ -206,8 +178,7 @@ void sfree(void* virtual_address)
 //		which switches to the kernel mode, calls move_user_mem(...)
 //		in "kern/mem/chunk_operations.c", then switch back to the user mode here
 //	the move_user_mem() function is empty, make sure to implement it.
-void *realloc(void *virtual_address, uint32 new_size)
-{
+void *realloc(void *virtual_address, uint32 new_size) {
 	//[PROJECT]
 	// Write your code here, remove the panic and write your code
 	panic("realloc() is not implemented yet...!!");
@@ -215,23 +186,19 @@ void *realloc(void *virtual_address, uint32 new_size)
 
 }
 
-
 //==================================================================================//
 //========================== MODIFICATION FUNCTIONS ================================//
 //==================================================================================//
 
-void expand(uint32 newSize)
-{
+void expand(uint32 newSize) {
 	panic("Not Implemented");
 
 }
-void shrink(uint32 newSize)
-{
+void shrink(uint32 newSize) {
 	panic("Not Implemented");
 
 }
-void freeHeap(void* virtual_address)
-{
+void freeHeap(void* virtual_address) {
 	panic("Not Implemented");
 
 }
