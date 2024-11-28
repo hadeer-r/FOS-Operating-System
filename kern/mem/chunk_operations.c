@@ -202,38 +202,43 @@ uint32 * ptr_page_table ;
 //=====================================
 // 2) FREE USER MEMORY:
 //=====================================
-void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
-    //TODO: [PROJECT'24.MS2 - #15] [3] USER HEAP [KERNEL SIDE] - free_user_mem
-    // Write your code here, remove the panic and write your code
-    //panic("free_user_mem() is not implemented yet...!!");
+void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
+{
+	//TODO: [PROJECT'24.MS2 - #15] [3] USER HEAP [KERNEL SIDE] - free_user_mem
+	// Write your code here, remove the panic and write your code
+	//panic("free_user_mem() is not implemented yet...!!");
+	
+	for(uint32 i = virtual_address ; i < virtual_address+size ; i += PAGE_SIZE)
+	{
+		
+		uint32 *page;
+		int ret = get_page_table(e->env_page_directory,i,&page);
+		if(!ret) page[PTX(i)] &= ~PERM_AVAILABLE;
+		
+		unmap_frame(e->env_page_directory,i);
+		env_page_ws_invalidate(e,i);
 
-    for (uint32 i = virtual_address; i < virtual_address + size; i += PAGE_SIZE) {
-        uint32 *page;
-        int ret = get_page_table(e->env_page_directory, i, &page);
-        if (!ret) {
-            page[PTX(i)] &= ~PERM_AVAILABLE;  // Mark page as unavailable
-        }
+	}
+	if(isPageReplacmentAlgorithmFIFO())
+	{
+		if(e->page_last_WS_element!=NULL)
+		{
+			struct WorkingSetElement *i=NULL;
+			LIST_FOREACH(i,&e->page_WS_list)
+			{
+			    if(i==e->page_last_WS_element)
+					break;
 
-        unmap_frame(e->env_page_directory, i);  // Unmap the frame
-        env_page_ws_invalidate(e, i);  // Invalidate the page in the working set
-    }
+				LIST_REMOVE(&e->page_WS_list,i);
+				LIST_INSERT_TAIL(&e->page_WS_list,i);
+			}
+		}
+	}
+		e->page_last_WS_element=NULL;
 
-    if (isPageReplacmentAlgorithmFIFO()) {
-        if (e->page_last_WS_element != NULL) {
-            struct WorkingSetElement *i = NULL;
-            LIST_FOREACH(i, &e->page_WS_list) {
-                if (i == e->page_last_WS_element)
-                    break;
 
-                LIST_REMOVE(&e->page_WS_list, i);
-                LIST_INSERT_TAIL(&e->page_WS_list, i);
-            }
-        }
-    }
-
-    e->page_last_WS_element = NULL;
+	
 }
-
 //=====================================
 // 2) FREE USER MEMORY (BUFFERING):
 //=====================================
