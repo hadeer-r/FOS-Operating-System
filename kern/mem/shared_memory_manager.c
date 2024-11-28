@@ -92,11 +92,29 @@ struct Share* create_share(int32 ownerID, char* shareName, uint32 size, uint8 is
 {
 	//TODO: [PROJECT'24.MS2 - #16] [4] SHARED MEMORY - create_share()
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	panic("create_share is not implemented yet");
+	//panic("create_share is not implemented yet");
 	//Your Code is Here...
+	struct Share* sharedObj = kmalloc(size);
 
+	if (sharedObj == NULL) {
+		return NULL;
+	}
+
+	struct FrameInfo** framesStorage = create_frames_storage((size / PAGE_SIZE));
+	if (framesStorage == NULL) {
+		return NULL;
+	}
+
+	sharedObj->ownerID = ownerID;
+	sharedObj->size = size;
+	sharedObj->isWritable = isWritable;
+	sharedObj->references = 1;
+	sharedObj->ID = (int32)((int32)sharedObj & 0x7FFFFFFF);
+	sharedObj->framesStorage = framesStorage;
+	strcpy(sharedObj->name, shareName);
+
+	return sharedObj;
 }
-
 //=============================
 // [3] Search for Share Object:
 //=============================
