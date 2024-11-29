@@ -368,7 +368,7 @@ void _main(void)
 			actualSize = 3*kilo/2 ;
 			expectedSize = ROUNDUP(actualSize + sizeOfMetaData, 2);
 
-			print_blocks_list(freeBlocksList);
+			//print_blocks_list(freeBlocksList);
 
 			va = malloc(actualSize);
 

@@ -94,7 +94,7 @@ void* sbrk(int numOfPages) {
 		}
 		uint32 prev_break = seg_break;
 		seg_break = seg_break + ((uint32) numOfPages) * PAGE_SIZE; //needed_break;
-		cprintf("pre_break in sbrk kernalll :%u\n", prev_break, "\n");
+		//cprintf("pre_break in sbrk kernalll :%u\n", prev_break, "\n");
 		return (void*) prev_break;
 
 	}
