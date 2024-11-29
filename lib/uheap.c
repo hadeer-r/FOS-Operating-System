@@ -20,11 +20,11 @@ void* sbrk(int increment) {
 bool marked[total], is_start[total];
 
 void* malloc(uint32 size) {
-	if(size==0) return NULL;
-	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
-
+	if (size == 0)
+		return NULL;
+	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE)
 		return alloc_block_FF(size);
-	}
+
 	if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
 		size = ROUNDUP(size, PAGE_SIZE);
 		uint32 needed_pages = size / PAGE_SIZE;
@@ -32,7 +32,7 @@ void* malloc(uint32 size) {
 		uint32 count = 0, va;
 		uint32 start_page = myEnv->u_limit + PAGE_SIZE;
 		for (uint32 i = start_page; i < USER_HEAP_MAX; i += PAGE_SIZE) {
-			uint32 x = (i -start_page ) / PAGE_SIZE;
+			uint32 x = (i - start_page) / PAGE_SIZE;
 			if (marked[x]) {
 				count = 0;
 			} else {
@@ -50,10 +50,8 @@ void* malloc(uint32 size) {
 
 			for (uint32 i = y; i < y + needed_pages; i++) {
 				marked[i] = 1;
-				//cprintf("p %d",i);
+
 			}
-			cprintf("add %x\n",va);
-			cprintf("sz %x\n",size);
 			sys_allocate_user_mem(va, size);
 			return (void *) va;
 
@@ -70,20 +68,43 @@ void* malloc(uint32 size) {
 void free(void* virtual_address) {
 	//TODO: [PROJECT'24.MS2 - #14] [3] USER HEAP [USER SIDE] - free()
 	// Write your code here, remove the panic and write your code
-	panic("free() is not implemented yet...!!");
+	uint32 va = (uint32) virtual_address;
+	uint32 start_page = myEnv->u_limit + PAGE_SIZE;
+	if (va >= USER_HEAP_START && va < myEnv->u_limit)
+		free_block(virtual_address);
+	else if (va >= start_page && va < USER_HEAP_MAX) {
+		uint32 y = (va - start_page) / PAGE_SIZE,numofpages=0;
+		if (is_start[y]) {
+			is_start[y]=0;
+			while(marked[y]&&!is_start[y])
+			{
+				numofpages++;
+				marked[y]=0;
+				y++;
+			}
+
+			sys_free_user_mem(va,numofpages*PAGE_SIZE);
+
+		}
+
+	} else
+		panic("Invalid virtual address");
+
+	return;
+
 }
 
 //=================================
 // [4] ALLOCATE SHARED VARIABLE:
 //=================================
 void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable) {
-	//==============================================================
-	//DON'T CHANGE THIS CODE========================================
+//==============================================================
+//DON'T CHANGE THIS CODE========================================
 	if (size == 0)
 		return NULL;
-	//==============================================================
-	//TODO: [PROJECT'24.MS2 - #18] [4] SHARED MEMORY [USER SIDE] - smalloc()
-	// Write your code here, remove the panic and write your code
+//==============================================================
+//TODO: [PROJECT'24.MS2 - #18] [4] SHARED MEMORY [USER SIDE] - smalloc()
+// Write your code here, remove the panic and write your code
 //	panic("smalloc() is not implemented yet...!!");
 
 	uint32 upsize = ROUNDUP(size, PAGE_SIZE);
@@ -122,8 +143,8 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable) {
 // [5] SHARE ON ALLOCATED SHARED VARIABLE:
 //========================================
 void* sget(int32 ownerEnvID, char *sharedVarName) {
-	//TODO: [PROJECT'24.MS2 - #20] [4] SHARED MEMORY [USER SIDE] - sget()
-	// Write your code here, remove the panic and write your code
+//TODO: [PROJECT'24.MS2 - #20] [4] SHARED MEMORY [USER SIDE] - sget()
+// Write your code here, remove the panic and write your code
 //	panic("sget() is not implemented yet...!!");
 	int size_shared_object = sys_getSizeOfSharedObject(ownerEnvID,
 			sharedVarName);
@@ -158,8 +179,8 @@ void* sget(int32 ownerEnvID, char *sharedVarName) {
 //	the freeSharedObject() function is empty, make sure to implement it.
 
 void sfree(void* virtual_address) {
-	//TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [USER SIDE] - sfree()
-	// Write your code here, remove the panic and write your code
+//TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [USER SIDE] - sfree()
+// Write your code here, remove the panic and write your code
 	panic("sfree() is not implemented yet...!!");
 }
 
@@ -179,8 +200,8 @@ void sfree(void* virtual_address) {
 //		in "kern/mem/chunk_operations.c", then switch back to the user mode here
 //	the move_user_mem() function is empty, make sure to implement it.
 void *realloc(void *virtual_address, uint32 new_size) {
-	//[PROJECT]
-	// Write your code here, remove the panic and write your code
+//[PROJECT]
+// Write your code here, remove the panic and write your code
 	panic("realloc() is not implemented yet...!!");
 	return NULL;
 

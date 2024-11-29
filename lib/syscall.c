@@ -298,11 +298,11 @@ void sys_utilities(char* utilityName, int value)
 //TODO: [PROJECT'24.MS1 - #02] [2] SYSTEM CALLS - Implement these system calls
 void* sys_sbrk(int increment)
 {
-	 syscall(SYS_Sbrk, increment , 0, 0,0,0);
+	 return (void*)syscall(SYS_Sbrk, increment , 0, 0,0,0);
 
 	//Comment the following line before start coding...
 //	panic("not implemented yet");
-	return (void*)-1 ;
+	//return (void*)-1 ;
 }
 
 void sys_free_user_mem(uint32 virtual_address, uint32 size)

@@ -137,20 +137,27 @@ void* sys_sbrk(int numOfPages) {
 	//TODO: [PROJECT'24.MS2 - #11] [3] USER HEAP - sys_sbrk
 	// how to get current user?
 	//cprintf("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+	cprintf("num of pages in sysbrk%d\n", numOfPages);
 	struct Env* env = get_cpu_proc();
 	if (numOfPages == 0)
 		return (void*) env->u_break;
 	else {
-		uint32 needed_break = env->u_break + ((uint32) numOfPages) * PAGE_SIZE;
-		if (needed_break > env->u_limit)
-			return (void*) -1;
 
-		if (numOfPages > LIST_SIZE(&MemFrameLists.free_frame_list))
+		if (numOfPages > LIST_SIZE(&MemFrameLists.free_frame_list)) {
+
 			return (void*) -1;
+		}
+		uint32 needed_break = env->u_break + ((uint32) numOfPages) * (uint32)PAGE_SIZE;
+		if (needed_break > env->u_limit) {
+
+			return (void*) -1;
+		}
 
 		uint32 prev_break = env->u_break;
 		env->u_break = needed_break; //needed_break;
-		allocate_user_mem(env, prev_break, needed_break-prev_break);
+		allocate_user_mem(env, prev_break,((uint32) numOfPages) * (uint32)PAGE_SIZE );
+
+
 		return (void*) prev_break;
 
 	}
@@ -163,7 +170,8 @@ void* sys_sbrk(int numOfPages) {
 // 1) ALLOCATE USER MEMORY:
 //=====================================
 void allocate_user_mem(struct Env* e, uint32 va, uint32 size) {
-	//cprintf("in alloc mmmee");
+	//cprintf("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+	size = ROUNDUP(size, PAGE_SIZE);
 	uint32 *ptr_page_table;
 	for (uint32 i = va; i < va + size; i += PAGE_SIZE)
 	{
