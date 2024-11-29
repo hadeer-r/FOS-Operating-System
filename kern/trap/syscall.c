@@ -302,6 +302,7 @@ int sys_pf_calculate_allocated_pages(void)
 void sys_free_user_mem(uint32 virtual_address, uint32 size)
 {
 	//TODO: [PROJECT'24.MS1 - #03] [2] SYSTEM CALLS - Params Validation
+//	cprintf("Params Validation in sys_free_user_mem");
 	if(virtual_address == 0 ){
 		    	env_exit();
 		    }
@@ -323,7 +324,8 @@ void sys_free_user_mem(uint32 virtual_address, uint32 size)
 	}
 	else
 	{
-		free_user_mem(cur_env, virtual_address, size);
+//		cprintf("Params Validation before free_user_mem");
+		 free_user_mem(cur_env, virtual_address, size);
 	}
 
 	return;

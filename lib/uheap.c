@@ -70,11 +70,38 @@ void* malloc(uint32 size) {
 //=================================
 // [3] FREE SPACE FROM USER HEAP:
 //=================================
-void free(void* virtual_address)
-{
+void free(void* virtual_address) {
 	//TODO: [PROJECT'24.MS2 - #14] [3] USER HEAP [USER SIDE] - free()
 	// Write your code here, remove the panic and write your code
-	panic("free() is not implemented yet...!!");
+//	cprintf("begin free");
+	uint32 va = (uint32) virtual_address;
+	uint32 start_page = myEnv->u_limit + PAGE_SIZE;
+	if (va >= USER_HEAP_START && va < myEnv->u_limit){
+//		cprintf("before free_block");
+		free_block(virtual_address);
+//	    cprintf("after free_block");
+	}
+	else if (va >= start_page && va < USER_HEAP_MAX) {
+//		cprintf("va >= start_page && va < USER_HEAP_MAX) ");
+		uint32 y = (va - start_page) / PAGE_SIZE,numofpages=0;
+		if (is_start[y]) {
+			is_start[y]=0;
+			while(marked[y]&&!is_start[y])
+			{
+				numofpages++;
+				marked[y]=0;
+				y++;
+			}
+//            cprintf("before sys_free_user_mem");
+			sys_free_user_mem(va,numofpages*PAGE_SIZE);
+//            cprintf("after sys_free_user_mem");
+		}
+
+	} else
+		panic("Invalid virtual address");
+
+	return;
+
 }
 
 

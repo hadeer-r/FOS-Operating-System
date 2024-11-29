@@ -137,24 +137,34 @@ void* sys_sbrk(int numOfPages) {
 	 */
 
 	//TODO: [PROJECT'24.MS2 - #11] [3] USER HEAP - sys_sbrk
-	// how to get current user?
-	struct Env* env = get_cpu_proc();
-	if (numOfPages == 0)
-		return (void*) env->u_break;
-	else {
-		uint32 needed_break = env->u_break + ((uint32) numOfPages) * PAGE_SIZE;
-		if (needed_break > env->u_limit)
-			return (void*) -1;
+		// how to get current user?
+//		cprintf("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+		cprintf("num of pages in sysbrk%d\n", numOfPages);
+		struct Env* env = get_cpu_proc();
+		if (numOfPages == 0){
+//			cprintf("if (numOfPages == 0){");
+			return (void*) env->u_break;}
+		else {
+//              cprintf("else if (numOfPages == 0){");
+			if (numOfPages > LIST_SIZE(&MemFrameLists.free_frame_list)) {
+//              cprintf("if (numOfPages > LIST_SIZE(&MemFrameLists.free_frame_list))");
+				return (void*) -1;
+			}
+			uint32 needed_break = env->u_break + ((uint32) numOfPages) * (uint32)PAGE_SIZE;
+			if (needed_break > env->u_limit) {
+//               cprintf("if (needed_break > env->u_limit)");
+				return (void*) -1;
+			}
 
-		if (numOfPages > LIST_SIZE(&MemFrameLists.free_frame_list))
-			return (void*) -1;
+			uint32 prev_break = env->u_break;
+			env->u_break = needed_break; //needed_break;
+			allocate_user_mem(env, prev_break,((uint32) numOfPages) * (uint32)PAGE_SIZE );
 
-		uint32 prev_break = env->u_break;
-		env->u_break = needed_break; //needed_break;
+            cprintf("before return (void*) prev_break;");
+			return (void*) prev_break;
 
-		return (void*) prev_break;
+		}
 
-	}
 
 	/*====================================*/
 	//the current running Environment to adjust its break limit
@@ -195,26 +205,26 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size)
 	// Write your code here, remove the panic and write your code
 	//panic("free_user_mem() is not implemented yet...!!");
 	  for (uint32 i = virtual_address; i < virtual_address + size; i += PAGE_SIZE) {
+//		    cprintf("begin free_user_mem");
 	        uint32 *ptr_page_table;
 	        int page_table = get_page_table(e->env_page_directory, i, &ptr_page_table);
 	        if (page_table == TABLE_IN_MEMORY) {
+//	        	cprintf("page_table == TABLE_IN_MEMORY");
 				 pt_set_page_permissions(e->env_page_directory, i, 0, PERM_MARKED);
 	        }
+	         pf_remove_env_page(e,i); // Free ALL pages of the given range from the Page File
+			 env_page_ws_invalidate(e,i); // Free ONLY pages that are resident in the working set from the memory
 
-	//        unmap_frame(e->env_page_directory, i);  // Unmap the frame
-	//        env_page_ws_invalidate(e, i);  // Invalidate the page in the working set
-	        pf_remove_env_page(e,virtual_address);
 	    }
 
-	//    if (isPageReplacmentAlgorithmFIFO()) {
-	//        if (e->page_last_WS_element != NULL) {
-	            struct WorkingSetElement *ws = NULL;
-	            LIST_FOREACH(ws, &e->page_WS_list) {
-	                if (ws->virtual_address >= virtual_address && ws->virtual_address < virtual_address + size){
-	                          unmap_frame(e->env_page_directory,virtual_address)
-	                          LIST_REMOVE(&e->page_WS_list, ws);
-	            }
-	        }
+//
+//	            struct WorkingSetElement *ws = NULL;
+//	            LIST_FOREACH(ws, &e->page_WS_list) {
+//	            	cprintf("after list_foreach");
+//	                if (ws->virtual_address >= virtual_address && ws->virtual_address < virtual_address + size){
+//	                          LIST_REMOVE(&e->page_WS_list, ws);
+//	            }
+//	        }
 //	for(uint32 i = virtual_address ; i < virtual_address+size ; i += PAGE_SIZE)
 //	{
 //
