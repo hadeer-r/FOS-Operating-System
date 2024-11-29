@@ -137,7 +137,7 @@ void* sys_sbrk(int numOfPages) {
 	//TODO: [PROJECT'24.MS2 - #11] [3] USER HEAP - sys_sbrk
 	// how to get current user?
 	//cprintf("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-	cprintf("num of pages in sysbrk%d\n", numOfPages);
+	//cprintf("num of pages in sysbrk%d\n", numOfPages);
 	struct Env* env = get_cpu_proc();
 	if (numOfPages == 0)
 		return (void*) env->u_break;
@@ -147,7 +147,8 @@ void* sys_sbrk(int numOfPages) {
 
 			return (void*) -1;
 		}
-		uint32 needed_break = env->u_break + ((uint32) numOfPages) * (uint32)PAGE_SIZE;
+		uint32 needed_break = env->u_break
+				+ ((uint32) numOfPages) * (uint32) PAGE_SIZE;
 		if (needed_break > env->u_limit) {
 
 			return (void*) -1;
@@ -155,8 +156,8 @@ void* sys_sbrk(int numOfPages) {
 
 		uint32 prev_break = env->u_break;
 		env->u_break = needed_break; //needed_break;
-		allocate_user_mem(env, prev_break,((uint32) numOfPages) * (uint32)PAGE_SIZE );
-
+		allocate_user_mem(env, prev_break,
+				((uint32) numOfPages) * (uint32) PAGE_SIZE);
 
 		return (void*) prev_break;
 
@@ -188,36 +189,22 @@ void allocate_user_mem(struct Env* e, uint32 va, uint32 size) {
 // 2) FREE USER MEMORY:
 //=====================================
 void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
-	//TODO: [PROJECT'24.MS2 - #15] [3] USER HEAP [KERNEL SIDE] - free_user_mem
-	// Write your code here, remove the panic and write your code
-	//panic("free_user_mem() is not implemented yet...!!");
-
-	for (uint32 i = virtual_address; i < virtual_address + size; i += PAGE_SIZE)
-	{
-
-		uint32 *page;
-		int ret = get_page_table(e->env_page_directory, i, &page);
-		if (!ret)
-			page[PTX(i)] &= ~PERM_AVAILABLE;
-
-		unmap_frame(e->env_page_directory, i);
-		env_page_ws_invalidate(e, i);
-
-	}
-	if (isPageReplacmentAlgorithmFIFO()) {
-		if (e->page_last_WS_element != NULL) {
-			struct WorkingSetElement *i = NULL;
-			LIST_FOREACH(i,&e->page_WS_list)
-			{
-				if (i == e->page_last_WS_element)
-					break;
-
-				LIST_REMOVE(&e->page_WS_list, i);
-				LIST_INSERT_TAIL(&e->page_WS_list, i);
-			}
+	for (uint32 i = virtual_address; i < virtual_address + size; i +=
+			PAGE_SIZE) {
+		//cprintf("begin free_user_mem");
+		uint32 *ptr_page_table;
+		int page_table = get_page_table(e->env_page_directory, i,
+				&ptr_page_table);
+		if (page_table == TABLE_IN_MEMORY) {
+			//cprintf("page_table == TABLE_IN_MEMORY");
+			pt_set_page_permissions(e->env_page_directory, i, 0, PERM_MARKED);
 		}
+		pf_remove_env_page(e, i); // Free ALL pages of the given range from the Page File
+		env_page_ws_invalidate(e, i); // Free ONLY pages that are resident in the working set from the memory
+
 	}
-	e->page_last_WS_element = NULL;
+	return;
+
 
 }
 //=====================================
