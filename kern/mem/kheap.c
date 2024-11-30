@@ -71,7 +71,7 @@ void* sbrk(int numOfPages) {
 
 		uint32 needed_break = seg_break + ((uint32) numOfPages) * PAGE_SIZE;
 		if (needed_break > limit) {
-			cprintf(" -1 test1 sbrk\n");
+//			cprintf(" -1 test1 sbrk\n");
 			return (void*) -1;
 
 
@@ -79,7 +79,7 @@ void* sbrk(int numOfPages) {
 
 		if (numOfPages > LIST_SIZE(&MemFrameLists.free_frame_list))
 		{
-			cprintf(" -1 test2 sbrk\n");
+//			cprintf(" -1 test2 sbrk\n");
 			return (void*) -1;
 		}
 		for (uint32 i = 0; i < numOfPages; i++) {
@@ -100,7 +100,6 @@ void* sbrk(int numOfPages) {
 	}
 
 }
-
 //TODO: [PROJECT'24.MS2 - BONUS#2] [1] KERNEL HEAP - Fast Page Allocator
 
 #define totalpages ((KERNEL_HEAP_MAX - KERNEL_HEAP_START) / PAGE_SIZE)

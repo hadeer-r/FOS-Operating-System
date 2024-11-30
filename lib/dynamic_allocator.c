@@ -175,8 +175,8 @@ void *alloc_block_FF(uint32 size) {
 	struct BlockElement *blk;
 	bool case1 = 0, case2 = 0;
 	size += 2 * sizeof(uint32); // head w footer
-	cprintf("sz of blk :%d\n", size, "\n");
-	print_blocks_list(freeBlocksList);
+//	cprintf("sz of blk :%d\n", size, "\n");
+//	print_blocks_list(freeBlocksList);
 	LIST_FOREACH (blk,&(freeBlocksList))
 	{
 		if ((get_block_size((void*) blk) >= size)) {
@@ -207,7 +207,7 @@ void *alloc_block_FF(uint32 size) {
 
 	if (!case1 && !case2) {
 
-		cprintf("ammmmmmmmmm in with sbrk");
+//		cprintf("ammmmmmmmmm in with sbrk");
 		uint32 new_size = size;
 		new_size = ROUNDUP(new_size, PAGE_SIZE);
 		int needed_pages = new_size / PAGE_SIZE;

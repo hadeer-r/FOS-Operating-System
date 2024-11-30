@@ -141,7 +141,7 @@ void* sys_sbrk(int numOfPages) {
 	struct Env* env = get_cpu_proc();
 	if (numOfPages == 0)
 		return (void*) env->u_break;
-	else {
+
 
 		if (numOfPages > LIST_SIZE(&MemFrameLists.free_frame_list)) {
 
@@ -159,8 +159,8 @@ void* sys_sbrk(int numOfPages) {
 		allocate_user_mem(env, prev_break,
 				((uint32) numOfPages) * (uint32) PAGE_SIZE);
 
-		}
 
+	return (void*)prev_break;
 
 	/*====================================*/
 	//the current running Environment to adjust its break limit

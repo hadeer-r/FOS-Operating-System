@@ -165,14 +165,14 @@ int sys_check_WS_list(uint32* WS_list_content, int actual_WS_list_size, uint32 l
 				}
 			}
 		}
-		cprintf("index of last WS element = %d\n",idx_WS_list);
+//		cprintf("index of last WS element = %d\n",idx_WS_list);
 		//Check the expected content starting from last WS element (if any)
 		if (env->page_last_WS_element)
 			ptr_WS_element = env->page_last_WS_element;
 		else
 			ptr_WS_element = LIST_FIRST(&(env->page_WS_list));
 
-		cprintf("comparison star from va = %x\n",ptr_WS_element->virtual_address);
+//		cprintf("comparison star from va = %x\n",ptr_WS_element->virtual_address);
 
 		for (int i = 0; i < actual_WS_list_size; ++i)
 		{

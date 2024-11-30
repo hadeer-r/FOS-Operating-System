@@ -1,6 +1,4 @@
 #include <inc/lib.h>
-#define total ((USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE) + 3
-
 
 #define total ((USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE) + 100
 //==================================================================================//
@@ -100,44 +98,58 @@ void free(void* virtual_address) {
 //=================================
 // [4] ALLOCATE SHARED VARIABLE:
 //=================================
-void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable) {
-//==============================================================
-//DON'T CHANGE THIS CODE========================================
-	if (size == 0)
-		return NULL;
-//==============================================================
-//TODO: [PROJECT'24.MS2 - #18] [4] SHARED MEMORY [USER SIDE] - smalloc()
-// Write your code here, remove the panic and write your code
+
+void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
+{
+	//==============================================================
+	//DON'T CHANGE THIS CODE========================================
+	if (size == 0) return NULL ;
+	//==============================================================
+	//TODO: [PROJECT'24.MS2 - #18] [4] SHARED MEMORY [USER SIDE] - smalloc()
+	// Write your code here, remove the panic and write your code
 //	panic("smalloc() is not implemented yet...!!");
-
-	uint32 upsize = ROUNDUP(size, PAGE_SIZE);
-	uint32 numpages = upsize / PAGE_SIZE;
-	int count = 0;
-
-	uint32 start = USER_HEAP_START;
-	uint32 end = USER_HEAP_MAX;
-
-	uint32 s_space = 0;
-	while (start < end) {
-		if (myEnv->env_page_directory == NULL) {
-			count++;
-			if (count == 1) {
-				s_space = start;
-			}
-		} else {
-			count = 0;
-			continue;
-		}
-
-		if (count == numpages) {
-
-			//(char* shareName, uint32 size, uint8 isWritable, void* virtual_address)
-			return (void*) sys_createSharedObject(sharedVarName, size,
-					isWritable, (void*) s_space);
-		}
-		start += PAGE_SIZE;
-
+	if(size<PAGE_SIZE){
+		size=PAGE_SIZE;
 	}
+	size = ROUNDUP(size, PAGE_SIZE);
+		uint32 needed_pages = size / PAGE_SIZE;
+
+		uint32 seq = 0, count = 0, va;
+		uint32 start_page = myEnv->u_limit + PAGE_SIZE;
+		for (uint32 i = start_page; i < USER_HEAP_MAX; i += PAGE_SIZE) {
+			uint32 x = (i - start_page) / PAGE_SIZE;
+			if (marked[x]) {
+				count = 0;
+			} else {
+				if (!count)
+					va = i;
+				count++;
+			}
+			if (count >= needed_pages)
+				break;
+		}
+
+		if (count >= needed_pages) {
+			uint32 y = (va - start_page) / PAGE_SIZE;
+			is_start[y] = 1;
+			marked[y] = 1;
+
+			for (uint32 i = y; i < y + needed_pages; i++) {
+				marked[i] = 1;
+			}
+
+			int x=sys_createSharedObject(sharedVarName,size,isWritable,(void*)va);
+			if (x ==E_NO_SHARE || x==E_SHARED_MEM_EXISTS )
+			{
+				return NULL;
+			}
+			else
+			{
+				return (void *)va;
+			}
+
+
+		}
 
 	return NULL;
 }
@@ -145,27 +157,33 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable) {
 //========================================
 // [5] SHARE ON ALLOCATED SHARED VARIABLE:
 //========================================
-void* sget(int32 ownerEnvID, char *sharedVarName) {
-//TODO: [PROJECT'24.MS2 - #20] [4] SHARED MEMORY [USER SIDE] - sget()
-// Write your code here, remove the panic and write your code
+void* sget(int32 ownerEnvID, char *sharedVarName)
+{
+	//TODO: [PROJECT'24.MS2 - #20] [4] SHARED MEMORY [USER SIDE] - sget()
+	// Write your code here, remove the panic and write your code
 //	panic("sget() is not implemented yet...!!");
 	int size_shared_object = sys_getSizeOfSharedObject(ownerEnvID,
-			sharedVarName);
-	if (size_shared_object <= 0)
-		return NULL;
-	void* allocated_VA = smalloc(sharedVarName, size_shared_object, 1);
-//	if(allocated_VA != NULL){
-//		void* shared_object = sys_getSharedObject(ownerEnvID,sharedVarName,allocated_VA);
-//		if(shared_object != NULL){
-//			return shared_object;
-//		}
-//		else
-//			return NULL;
-//	}else
-	return NULL;
-
+				sharedVarName);
+		if (size_shared_object <= 0||size_shared_object == E_SHARED_MEM_NOT_EXISTS)
+			return NULL;
+		//cprintf("gab elsize wmsh bnull \n");
+		void* allocated_VA = smalloc(sharedVarName, size_shared_object, 1);
+		//cprintf("3ml smalloc \n");
+		if(allocated_VA != NULL){
+			int shared_object = sys_getSharedObject(ownerEnvID,sharedVarName,allocated_VA);
+			//cprintf("gab elshared object  \n");
+			if(shared_object!=E_SHARED_MEM_NOT_EXISTS ){
+				//cprintf("------msh da5el null");
+				return allocated_VA;
+			}
+			else
+			{//cprintf("------da5l 1 null");
+				return NULL;
+			}
+		}else
+		{//cprintf("------da5l 2 null");
+		    return NULL;}
 }
-
 //==================================================================================//
 //============================== BONUS FUNCTIONS ===================================//
 //==================================================================================//

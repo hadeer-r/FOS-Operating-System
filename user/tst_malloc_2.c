@@ -67,8 +67,7 @@ void _main(void)
 			{
 				actualSize = allocSizes[i] - sizeOfMetaData;
 				va = startVAs[idx] = malloc(actualSize);
-				cprintf("vaaa :%x\n",va , "\n");
-				cprintf("actual size :%d\n",actualSize , "\n");
+
 				midVAs[idx] = va + actualSize/2 ;
 				endVAs[idx] = va + actualSize - sizeof(short);
 				//Check returned va

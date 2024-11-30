@@ -1,3 +1,4 @@
+
 #ifndef FOS_SHARED_MEMORY_MANAGER_H
 #define FOS_SHARED_MEMORY_MANAGER_H
 #ifndef FOS_KERNEL
@@ -30,7 +31,7 @@ struct Share
 
 	//to store frames to be shared
 	struct FrameInfo** framesStorage;
-
+	uint32 n_frames;
 	// list link pointers
 	LIST_ENTRY(Share) prev_next_info;
 

@@ -197,17 +197,17 @@ void fault_handler(struct Trapframe *tf) {
 
 			if ((fault_va >= USER_HEAP_START && fault_va < USER_HEAP_MAX)
 					&& !(validate_perm & PERM_MARKED)) {
-				cprintf("1\n");
+//				cprintf("1\n");
 				env_exit();
 			}
 
 			if (fault_va >= USER_LIMIT) {
-				cprintf("2/n ");
+//				cprintf("2/n ");
 				env_exit();
 			}
 			if ((validate_perm & PERM_PRESENT)
 					&& !(validate_perm & PERM_WRITEABLE)) {
-				cprintf("3/n");
+//				cprintf("3/n");
 				env_exit();
 			}
 
