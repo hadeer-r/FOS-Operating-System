@@ -927,10 +927,11 @@ void initialize_uheap_dynamic_allocator(struct Env* e, uint32 daStart, uint32 da
 	//	2) call the initialize_dynamic_allocator(..) to complete the initialization
 
 	e->u_start=daStart;
-		e->u_break=daStart+0;
-		e->u_limit=daLimit;
-		 initialize_dynamic_allocator(e->u_start,0);
-		 return;
+	e->u_break=daStart+0;
+	e->u_limit=daLimit;
+	 initialize_dynamic_allocator(e->u_start,0);
+	 return;
+
 }
 
 //==============================================================

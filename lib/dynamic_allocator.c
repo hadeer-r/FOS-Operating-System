@@ -137,7 +137,6 @@ void set_block_data(void* va, uint32 totalSize, bool isAllocated) {
 
 	*footer = totalSize | isAllocated;
 
-
 }
 
 //=========================================
@@ -147,7 +146,7 @@ int cow = 0;
 void *alloc_block_FF(uint32 size) {
 	if (size == 0)
 		return NULL;
-//	cprintf("ttttttttttttttttttttttttttttttttttt :%d\n", ++cow, "\n");
+
 //	print_blocks_list((struct MemBlock_LIST) (freeBlocksList));
 	//==================================================================================
 	//DON'T CHANGE THESE LINES==========================================================
@@ -176,12 +175,14 @@ void *alloc_block_FF(uint32 size) {
 	struct BlockElement *blk;
 	bool case1 = 0, case2 = 0;
 	size += 2 * sizeof(uint32); // head w footer
+	cprintf("sz of blk :%d\n", size, "\n");
+	print_blocks_list(freeBlocksList);
 	LIST_FOREACH (blk,&(freeBlocksList))
 	{
 		if ((get_block_size((void*) blk) >= size)) {
 
 			//
-			if (get_block_size((void*) blk) > size + (uint32) 16) // what is minimum block size?
+			if (get_block_size((void*) blk) >= size + (uint32) 16) // what is minimum block size?
 					{
 				//
 				uint32 rem = get_block_size((void*) blk) - size;
@@ -198,33 +199,32 @@ void *alloc_block_FF(uint32 size) {
 				set_block_data(blk, get_block_size((void*) blk), 1);
 				case2 = 1;
 			}
-			//	print_blocks_list((struct MemBlock_LIST)(freeBlocksList));
 			LIST_REMOVE(&freeBlocksList, blk);
-			//print_blocks_list((struct MemBlock_LIST)(freeBlocksList));
-
 			break;
 		}
 
 	}
 
 	if (!case1 && !case2) {
-//		cprintf("i can not alloc :%d\n", 55555, "\n");
 
+		cprintf("ammmmmmmmmm in with sbrk");
 		uint32 new_size = size;
 		new_size = ROUNDUP(new_size, PAGE_SIZE);
 		int needed_pages = new_size / PAGE_SIZE;
-		void* address = sbrk(needed_pages);
 
-		if (address == (void*) -1)
+		uint32 address = (uint32) sbrk(needed_pages);
+		//cprintf("add in ff :%u\n", address, "\n");
+		if ((void*) address == (void*) -1)
 			return NULL;
 
-	    uint32* END_Block = (uint32*) ((uint32)address + new_size - sizeof(uint32));
-	    *END_Block = 0x1;
+		uint32* END_Block = (uint32*) ((uint32) address + new_size
+				- sizeof(uint32));
+		*END_Block = 0x1;
 
 		struct BlockElement*p = NULL;
 		if (LIST_SIZE(&(freeBlocksList)))
 			p = LIST_LAST(&freeBlocksList);
-		struct BlockElement * newBlock_add = address;
+		struct BlockElement * newBlock_add = (void*) address;
 		struct BlockElement*prev = (struct BlockElement*) ((char *) newBlock_add
 				- sizeof(uint32));
 
@@ -245,8 +245,7 @@ void *alloc_block_FF(uint32 size) {
 		blk = alloc_block_FF(size - 2 * sizeof(uint32));
 
 	}
-
-//	cprintf("Done :%d\n", 10, "\n");
+	uint32 x = (uint32) blk;
 
 	return (void *) blk;
 }
@@ -327,22 +326,14 @@ void *alloc_block_BF(uint32 size) {
 void free_block(void *va) {
 	if (va == NULL)
 		return;
-	//TODO: [PROJECT'24.MS1 - #07] [3] DYNAMIC ALLOCATOR - free_block
-	//COMMENT THE FOLLOWING LINE BEFORE START CODING
-	//panic("free_block is not implemented yet");
-	//Your Code is Here...
 
-	// is the address may be not here , not belong to the heap?!
-//	set_block_data( va, get_block_size(va), 0);
-	// to put it sorted , you have three cases
-
-	//struct BlockElement* new_address= (struct BlockElement*)((char *)blk+size);
-//		cprintf("1\n");
-	uint32 sz = LIST_SIZE(&freeBlocksList);
-	struct BlockElement * it = LIST_FIRST(&freeBlocksList);
+	if (!LIST_SIZE(&freeBlocksList)) {
+		LIST_INSERT_HEAD(&freeBlocksList, (struct BlockElement * ) va);
+		uint32 sz = get_block_size(va);
+		set_block_data(va, sz, 0);
+		return;
+	}
 	bool found = 0;
-	bool is_list = 0;
-
 	struct BlockElement *current_blk;
 	LIST_FOREACH(current_blk,&(freeBlocksList))
 	{
@@ -353,7 +344,6 @@ void free_block(void *va) {
 			found = 1;
 			break;
 		}
-		is_list = 1;
 	}
 
 	if (!found)
@@ -369,36 +359,23 @@ void free_block(void *va) {
 	uint32 new_sz = 0;
 
 	if (p && n && is_free_block(prev) && is_free_block(nxt)) {
-//		cprintf("=====================NEXT & PREV====================\n");
-		new_sz = get_block_size(n) + get_block_size(p) + get_block_size(va);
+		new_sz = get_block_size(nxt) + get_block_size(prev)
+				+ get_block_size(va);
 		LIST_REMOVE(&freeBlocksList, n);
 		LIST_REMOVE(&freeBlocksList, (struct BlockElement* )va);
 		set_block_data(p, new_sz, 0);
-//		    	 cprintf("Size1 :%d\n",new_sz,"\n");
-		return;
-	}
-	if (p && is_free_block(prev)) {
-//		cprintf("=====================PREV====================\n");
-
-		new_sz = get_block_size(p) + get_block_size(va);
+	} else if (p && is_free_block(prev)) {
+		new_sz = get_block_size(prev) + get_block_size(va);
 		LIST_REMOVE(&freeBlocksList, (struct BlockElement * )va);
 		set_block_data(p, new_sz, 0);
-//		    	 cprintf("Size2 :%d",new_sz,"\n");
-		return;
-	}
-	if (n && is_free_block(nxt)) {
-//	cprintf("=====================NEXT====================\n");
-
-		new_sz = get_block_size(n) + get_block_size(va);
+	} else if (n && is_free_block(nxt)) {
+		new_sz = get_block_size(nxt) + get_block_size(va);
 		LIST_REMOVE(&freeBlocksList, n);
 		set_block_data(va, new_sz, 0);
-
-//   	 cprintf("Size3 :%d\n",new_sz,"\n");
-		return;
+	} else {
+		new_sz = get_block_size(va);
+		set_block_data(va, new_sz, 0);
 	}
-	new_sz = get_block_size(va);
-	set_block_data(va, new_sz, 0);
-//    		cprintf("Size4 :%d\n",new_sz);
 
 	return;
 
@@ -408,10 +385,10 @@ void free_block(void *va) {
 // [6] REALLOCATE BLOCK BY FIRST FIT:
 //=========================================
 void *realloc_block_FF(void* va, uint32 new_size) {
-	//TODO: [PROJECT'24.MS1 - #08] [3] DYNAMIC ALLOCATOR - realloc_block_FF
-	//COMMENT THE FOLLOWING LINE BEFORE START CODING
+//TODO: [PROJECT'24.MS1 - #08] [3] DYNAMIC ALLOCATOR - realloc_block_FF
+//COMMENT THE FOLLOWING LINE BEFORE START CODING
 //	panic("realloc_block_FF is not implemented yet");
-	//Your Code is Here...
+//Your Code is Here...
 
 	if (va == NULL) {
 		if (new_size > 0) {
@@ -493,7 +470,7 @@ void *realloc_block_FF(void* va, uint32 new_size) {
 
 	}
 
-	// last condition is that new_size < old_size
+// last condition is that new_size < old_size
 
 	if (old_size - new_size < 16) {
 		cprintf("6\n");
