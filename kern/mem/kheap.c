@@ -224,7 +224,7 @@ void kfree(void* virtual_address) {
 
 }
 
-unsigned int kheap_physical_address(unsigned int virtual_address) {
+uint32 kheap_physical_address(unsigned int virtual_address) {
 	//TODO: [PROJECT'24.MS2 - #05] [1] KERNEL HEAP - kheap_physical_address
 	// Write your code here, remove the panic and write your code
 	//panic("kheap_physical_address() is not implemented yet...!!");
@@ -241,7 +241,7 @@ unsigned int kheap_physical_address(unsigned int virtual_address) {
 
 }
 
-unsigned int kheap_virtual_address(unsigned int physical_address) {
+uint32 kheap_virtual_address(uint32 physical_address) {
 	//TODO: [PROJECT'24.MS2 - #06] [1] KERNEL HEAP - kheap_virtual_address
 	// Write your code here, remove the panic and write your code
 	//panic("kheap_virtual_address() is not implemented yet...!!");

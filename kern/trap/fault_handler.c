@@ -298,8 +298,6 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va) {
 					|| (fault_va >= USTACKBOTTOM && fault_va < USTACKTOP)) {
 
 			} else {
-				cprintf("Invalid access to va=%x. Exiting process...\n",
-						fault_va);
 				env_exit();
 			}
 		}
