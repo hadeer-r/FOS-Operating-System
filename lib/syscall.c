@@ -303,10 +303,12 @@ void* sys_sbrk(int increment)
 	//Comment the following line before start coding...
 //	panic("not implemented yet");
 	//return (void*)-1 ;
+
 }
 
 void sys_free_user_mem(uint32 virtual_address, uint32 size)
 {
+//	cprintf("before syscall(SYS_Free_User_Mem,");
 	syscall(SYS_Free_User_Mem, virtual_address , size, 0,0,0);
 
 	//Comment the following line before start coding...

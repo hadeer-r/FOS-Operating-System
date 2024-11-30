@@ -319,6 +319,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va) {
 				faulted_env->page_last_WS_element = LIST_FIRST(
 						&(faulted_env->page_WS_list)); // Update to last element
 
+
 			}
 		}
 

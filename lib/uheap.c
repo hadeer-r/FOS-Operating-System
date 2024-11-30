@@ -1,6 +1,8 @@
 #include <inc/lib.h>
 #define total ((USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE) + 3
 
+
+#define total ((USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE) + 100
 //==================================================================================//
 //============================ REQUIRED FUNCTIONS ==================================//
 //==================================================================================//
@@ -50,7 +52,6 @@ void* malloc(uint32 size) {
 
 			for (uint32 i = y; i < y + needed_pages; i++) {
 				marked[i] = 1;
-
 			}
 			sys_allocate_user_mem(va, size);
 			return (void *) va;
@@ -73,6 +74,7 @@ void free(void* virtual_address) {
 	if (va >= USER_HEAP_START && va < myEnv->u_limit)
 		free_block(virtual_address);
 	else if (va >= start_page && va < USER_HEAP_MAX) {
+
 		uint32 y = (va - start_page) / PAGE_SIZE,numofpages=0;
 		if (is_start[y]) {
 			is_start[y]=0;
@@ -86,6 +88,7 @@ void free(void* virtual_address) {
 			sys_free_user_mem(va,numofpages*PAGE_SIZE);
 
 		}
+
 
 	} else
 		panic("Invalid virtual address");

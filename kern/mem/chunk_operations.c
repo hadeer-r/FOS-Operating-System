@@ -128,7 +128,7 @@ void* sys_sbrk(int numOfPages) {
 	 * NOTES:
 	 *     1) As in real OS, allocate pages lazily. While sbrk moves the segment break, pages are not allocated
 	 *         until the user program actually tries to access data in its heap (i.e. will be allocated via the fault handler).
-	 *     2) Allocating additional pages for a process’ heap will fail if, for example, the free frames are exhausted
+	 *     2) Allocating additional pages for a processï¿½ heap will fail if, for example, the free frames are exhausted
 	 *         or the break exceed the limit of the dynamic allocator. If sys_sbrk fails, the net effect should
 	 *         be that sys_sbrk returns (void*) -1 and that the segment break and the process heap are unaffected.
 	 *         You might have to undo any operations you have done so far in this case.
@@ -159,9 +159,8 @@ void* sys_sbrk(int numOfPages) {
 		allocate_user_mem(env, prev_break,
 				((uint32) numOfPages) * (uint32) PAGE_SIZE);
 
-		return (void*) prev_break;
+		}
 
-	}
 
 	/*====================================*/
 	//the current running Environment to adjust its break limit
@@ -184,6 +183,7 @@ void allocate_user_mem(struct Env* e, uint32 va, uint32 size) {
 		}
 		pt_set_page_permissions(e->env_page_directory, i, PERM_MARKED, 0);
 	}
+
 }
 //=====================================
 // 2) FREE USER MEMORY:
@@ -204,6 +204,7 @@ void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
 
 	}
 	return;
+
 
 
 }

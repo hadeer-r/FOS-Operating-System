@@ -295,6 +295,7 @@ void sys_free_user_mem(uint32 virtual_address, uint32 size) {
 		__free_user_mem_with_buffering(cur_env, virtual_address, size);
 	} else {
 		free_user_mem(cur_env, virtual_address, size);
+
 	}
 
 	return;
@@ -489,7 +490,7 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4,
 		sys_allocate_user_mem(a1, a2);
 		return 0;
 		break;
-		//======================================================================
+
 	case SYS_cputs:
 		sys_cputs((const char*) a1, a2, (uint8) a3);
 		return 0;
