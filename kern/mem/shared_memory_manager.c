@@ -171,64 +171,64 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size, uint8 isWrit
 	//Your Code is Here...
 
 	struct Env* myenv = get_cpu_proc(); //The calling environment
-	if (myenv == NULL)
-	    {
-	        return E_NO_SHARE;
-	    }
+		if (myenv == NULL)
+		    {
+		        return E_NO_SHARE;
+		    }
 
-	 struct Share* existingShare = get_share(ownerID, shareName);
-	    if (existingShare != NULL) {
-	       // cprintf("Error: Shared object '%s' already exists for ownerID: %d\n", shareName, ownerID);
-	        return E_SHARED_MEM_EXISTS;
-	    }
-	    else
-	    { //cprintf("da5l fe else \n");
-	    struct Share* newShare = create_share(ownerID,shareName,size,isWritable);
+		 struct Share* existingShare = get_share(ownerID, shareName);
+		    if (existingShare != NULL) {
+		       // cprintf("Error: Shared object '%s' already exists for ownerID: %d\n", shareName, ownerID);
+		        return E_SHARED_MEM_EXISTS;
+		    }
+		    else
+		    { //cprintf("da5l fe else \n");
+		    struct Share* newShare = create_share(ownerID,shareName,size,isWritable);
 
-	    if (newShare == NULL)
-	    {
-	        return E_NO_SHARE; // Memory allocation failed
-	    }
-	    struct FrameInfo** frame = NULL ;
-	    uint32* page_table ;
-	    int found =  get_page_table(myenv->env_page_directory,(uint32)virtual_address,&page_table);
-	    if (found == TABLE_NOT_EXIST)
-	    {
-	    	create_page_table(myenv->env_page_directory,(uint32)virtual_address);
-	    }
-	    for (uint32 i =0 ; i<newShare->n_frames ;i++)
-	    {
-	    	if (allocate_frame(&newShare->framesStorage[i]) != 0) {
-	    	            // Cleanup on failure
-	    	            for (uint32 j = 0; j < i; j++) {
-	    	                free_frame(newShare->framesStorage[j]);
-	    	            }
-	    	            kfree(newShare->framesStorage);
-	    	            kfree(newShare);
-	    	            return E_NO_SHARE;
-	    	        }
+		    if (newShare == NULL)
+		    {
+		        return E_NO_SHARE; // Memory allocation failed
+		    }
+		    struct FrameInfo** frame = NULL ;
+		    uint32* page_table ;
+		    int found =  get_page_table(myenv->env_page_directory,(uint32)virtual_address,&page_table);
+		    if (found == TABLE_NOT_EXIST)
+		    {
+		    	create_page_table(myenv->env_page_directory,(uint32)virtual_address);
+		    }
+		    for (uint32 i =0 ; i<newShare->n_frames ;i++)
+		    {
+		    	if (allocate_frame(&newShare->framesStorage[i]) != 0) {
+		    	            // Cleanup on failure
+		    	            for (uint32 j = 0; j < i; j++) {
+		    	                free_frame(newShare->framesStorage[j]);
+		    	            }
+		    	            kfree(newShare->framesStorage);
+		    	            kfree(newShare);
+		    	            return E_NO_SHARE;
+		    	        }
 
-	    	        // Calculate the virtual address for this frame
-	    	        uint32 va = (uint32)virtual_address + (i * PAGE_SIZE);
+		    	        // Calculate the virtual address for this frame
+		    	        uint32 va = (uint32)virtual_address + (i * PAGE_SIZE);
 
-	    	        // Map the frame
-	    	        if (map_frame(myenv->env_page_directory, newShare->framesStorage[i], va, PERM_WRITEABLE | PERM_USER) != 0) {
-	    	            // Cleanup on failure
-	    	            for (uint32 j = 0; j <= i; j++) {
-	    	                free_frame(newShare->framesStorage[j]);
-	    	            }
-	    	            kfree(newShare->framesStorage);
-	    	            kfree(newShare);
-	    	            return E_NO_SHARE;
-	    	        }
-	    	    }
-	    acquire_spinlock(&AllShares.shareslock);
-	    LIST_INSERT_TAIL(&AllShares.shares_list, newShare);
-	    release_spinlock(&AllShares.shareslock);
+		    	        // Map the frame
+		    	        if (map_frame(myenv->env_page_directory, newShare->framesStorage[i], va, PERM_WRITEABLE | PERM_USER) != 0) {
+		    	            // Cleanup on failure
+		    	            for (uint32 j = 0; j <= i; j++) {
+		    	                free_frame(newShare->framesStorage[j]);
+		    	            }
+		    	            kfree(newShare->framesStorage);
+		    	            kfree(newShare);
+		    	            return E_NO_SHARE;
+		    	        }
+		    	    }
+		    acquire_spinlock(&AllShares.shareslock);
+		    LIST_INSERT_TAIL(&AllShares.shares_list, newShare);
+		    release_spinlock(&AllShares.shareslock);
 
-	    return newShare->ID;
-	}
+		    return newShare->ID;
 }
+
 
 //======================
 // [5] Get Share Object:

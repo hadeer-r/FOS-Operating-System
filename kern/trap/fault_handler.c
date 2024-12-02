@@ -289,8 +289,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va) {
 				ptr_frame_info, fault_va,
 				PERM_WRITEABLE | PERM_PRESENT | PERM_USER | PERM_MARKED);
 		if (map_faulted_page == E_NO_MEM) {
-			panic(
-					" no page table found and there�s no free frame for creating it.");
+			panic(" no page table found and there�s no free frame for creating it.");
 		}
 		int read = pf_read_env_page(faulted_env, (void *) fault_va);
 		if (read == E_PAGE_NOT_EXIST_IN_PF) {
