@@ -42,7 +42,9 @@ _main(void)
 	cprintf("STEP B: checking getting shared object that is NOT exists... [35%]\n\n");
 	{
 		int ret ;
+		cprintf("before calling sget\n");
 		x = sget(myEnv->env_id, "xx");
+		cprintf("after calling sget\n");
 		int freeFrames = sys_calculate_free_frames() ;
 		if (x != NULL) {is_correct = 0; cprintf("Trying to get a NON existing object and corresponding error is not returned!!");}
 		if ((freeFrames - sys_calculate_free_frames()) !=  0) {is_correct = 0; cprintf("Wrong get: make sure that you don't allocate any memory if the shared object not exists");}
