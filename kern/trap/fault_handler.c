@@ -302,8 +302,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va) {
 			}
 		}
 
-		struct WorkingSetElement*new_element = env_page_ws_list_create_element(
-				faulted_env, fault_va);
+		struct WorkingSetElement*new_element = env_page_ws_list_create_element(faulted_env, fault_va);
 //		    	cprintf("WorkingSetElement*new_element  ");
 		if (new_element == NULL) {
 			panic("Failed to create a new Working Set element!");
@@ -314,10 +313,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va) {
 //                	cprintf("LIST_INSERT_TAIL  ");
 			wsSize++;
 			if (wsSize == faulted_env->page_WS_max_size) {
-				faulted_env->page_last_WS_element = LIST_FIRST(
-						&(faulted_env->page_WS_list)); // Update to last element
-
-
+				faulted_env->page_last_WS_element = LIST_FIRST(&(faulted_env->page_WS_list)); // Update to last element
 			}
 		}
 
