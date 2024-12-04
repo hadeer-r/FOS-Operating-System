@@ -231,7 +231,7 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size, uint8 isWrit
 		    return newShare->ID;
 
 }
-
+}
 
 //======================
 // [5] Get Share Object:
