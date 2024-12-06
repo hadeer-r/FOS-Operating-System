@@ -148,20 +148,20 @@ struct Share* get_share(int32 ownerID, char* name)
     struct Share* current_share;
 
     //cprintf("Searching for shared object with name: %s, ownerID: %d\n", name, ownerID);
-//    acquire_spinlock(&AllShares.shareslock);
+    acquire_spinlock(&AllShares.shareslock);
 
     LIST_FOREACH(current_share, &AllShares.shares_list) {
        // cprintf("Checking object: %s, ownerID: %d\n", current_share->name, current_share->ownerID);
 
         if (current_share->ownerID == ownerID && strcmp(current_share->name, name) == 0) {
            // cprintf("Found shared object: %s, ownerID: %d\n", current_share->name, current_share->ownerID);
-//            release_spinlock(&AllShares.shareslock);
+            release_spinlock(&AllShares.shareslock);
             return current_share; // Found the shared object
         }
     }
 
     //cprintf("Shared object not found.\n");
-//    release_spinlock(&AllShares.shareslock);
+    release_spinlock(&AllShares.shareslock);
     return NULL; // Not found
 }
 //=========================
@@ -221,7 +221,8 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address)
 	        return E_SHARED_MEM_NOT_EXISTS;
 	    }
 	    struct Share* share = get_share(ownerID, shareName);
-//	    acquire_spinlock(&AllShares.shareslock);
+
+	    acquire_spinlock(&AllShares.shareslock);
 	    uint32 nsize=ROUNDUP(share->size,PAGE_SIZE)/PAGE_SIZE;
 	       for (uint32 i = 0; i < nsize; i++)
 	          {
@@ -240,7 +241,7 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address)
 	             // cprintf("mapmazbota \n");
 	             // cprintf("i = %d ,n_frames= %d \n",i ,share->n_frames);
 	          }
-//	       	   release_spinlock(&AllShares.shareslock);
+	       	   release_spinlock(&AllShares.shareslock);
 
 	          share->references++;
 
