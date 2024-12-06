@@ -29,7 +29,7 @@ _main(void)
 		int32 envId = sys_create_env("protection_slave1", (myEnv->page_WS_max_size),(myEnv->SecondListSize), (myEnv->percentage_of_WS_pages_to_be_removed));
 		sys_run_env(envId);
 	}
-
+	cprintf("gettst = %d\n",gettst());
 	while (gettst() != numOfSlaves) ;
 
 	cprintf("%~\nCongratulations... test protection is run successfully\n");

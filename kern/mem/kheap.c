@@ -30,7 +30,6 @@ int initialize_kheap_dynamic_allocator(uint32 daStart,
 
 	if (needed_frames > LIST_SIZE(&MemFrameLists.free_frame_list))
 		return E_NO_MEM;
-
 	for (uint32 i = 0; i < needed_frames; i++) {
 		struct FrameInfo* ptr_frame;
 		allocate_frame(&ptr_frame);
@@ -82,6 +81,7 @@ void* sbrk(int numOfPages) {
 //			cprintf(" -1 test2 sbrk\n");
 			return (void*) -1;
 		}
+
 		for (uint32 i = 0; i < numOfPages; i++) {
 			struct FrameInfo* ptr_frame;
 			allocate_frame(&ptr_frame);
@@ -92,6 +92,7 @@ void* sbrk(int numOfPages) {
 					(void*) (seg_break + i * PAGE_SIZE);
 			frame_array[to_frame_number(ptr_frame)].num_of_frames = 0;
 		}
+
 		uint32 prev_break = seg_break;
 		seg_break = seg_break + ((uint32) numOfPages) * PAGE_SIZE; //needed_break;
 		//cprintf("pre_break in sbrk kernalll :%u\n", prev_break, "\n");
@@ -188,6 +189,7 @@ void kfree(void* virtual_address) {
 	}
 
 	else if (va >= (limit + PAGE_SIZE) && va < KERNEL_HEAP_MAX) {
+
 		uint32 n_pages;
 
 		for (int i = 0; i < MaX_F; i++) {
