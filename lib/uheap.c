@@ -113,10 +113,12 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 	}
 	size = ROUNDUP(size, PAGE_SIZE);
 		uint32 needed_pages = size / PAGE_SIZE;
+		uint32 va = (USER_HEAP_MAX-((uint32)myEnv->u_limit + PAGE_SIZE))/PAGE_SIZE;
 
-		uint32 seq = 0, count = 0, va;
+		uint32 seq = 0, count = 0;
 		uint32 start_page = myEnv->u_limit + PAGE_SIZE;
-		for (uint32 i = start_page; i < USER_HEAP_MAX; i += PAGE_SIZE) {
+
+		for (uint32 i = start_page; i < USER_HEAP_MAX-PAGE_SIZE; i += PAGE_SIZE) {
 			uint32 x = (i - start_page) / PAGE_SIZE;
 			if (marked[x]) {
 				count = 0;
