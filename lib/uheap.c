@@ -1,5 +1,5 @@
-#include <inc/lib.h>
 
+#include <inc/lib.h>
 #define total ((USER_HEAP_MAX - USER_HEAP_START) / PAGE_SIZE) + 100
 //==================================================================================//
 //============================ REQUIRED FUNCTIONS ==================================//
@@ -21,45 +21,46 @@ bool marked[total], is_start[total];
 
 void* malloc(uint32 size) {
 	if (size == 0)
+			return NULL;
+		if (size <= DYN_ALLOC_MAX_BLOCK_SIZE)
+			return alloc_block_FF(size);
+
+		if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
+			size = ROUNDUP(size, PAGE_SIZE);
+			uint32 needed_pages = size / PAGE_SIZE;
+
+			uint32 count = 0, va;
+			uint32 start_page = myEnv->u_limit + PAGE_SIZE;
+			for (uint32 i = start_page; i < USER_HEAP_MAX; i += PAGE_SIZE) {
+				uint32 x = (i - start_page) / PAGE_SIZE;
+				if (marked[x]) {
+					count = 0;
+				} else {
+					if (!count)
+						va = i;
+					count++;
+				}
+				if (count >= needed_pages)
+					break;
+			}
+
+			if (count >= needed_pages) {
+				uint32 y = (va - start_page) / PAGE_SIZE;
+				is_start[y] = 1;
+
+				for (uint32 i = y; i < y + needed_pages; i++) {
+					marked[i] = 1;
+				}
+				sys_allocate_user_mem(va, size);
+				return (void *) va;
+
+			}
+		}
+
+		// No suitable block found
 		return NULL;
-	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE)
-		return alloc_block_FF(size);
-
-	if (sys_isUHeapPlacementStrategyFIRSTFIT()) {
-		size = ROUNDUP(size, PAGE_SIZE);
-		uint32 needed_pages = size / PAGE_SIZE;
-
-		uint32 count = 0, va;
-		uint32 start_page = myEnv->u_limit + PAGE_SIZE;
-		for (uint32 i = start_page; i < USER_HEAP_MAX; i += PAGE_SIZE) {
-			uint32 x = (i - start_page) / PAGE_SIZE;
-			if (marked[x]) {
-				count = 0;
-			} else {
-				if (!count)
-					va = i;
-				count++;
-			}
-			if (count >= needed_pages)
-				break;
-		}
-
-		if (count >= needed_pages) {
-			uint32 y = (va - start_page) / PAGE_SIZE;
-			is_start[y] = 1;
-
-			for (uint32 i = y; i < y + needed_pages; i++) {
-				marked[i] = 1;
-			}
-			sys_allocate_user_mem(va, size);
-			return (void *) va;
-
-		}
-	}
-
-	// No suitable block found
-	return NULL;
 }
+
 
 //=================================
 // [3] FREE SPACE FROM USER HEAP:
@@ -103,55 +104,48 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 {
 	//==============================================================
 	//DON'T CHANGE THIS CODE========================================
-	if (size == 0) return NULL ;
 	//==============================================================
 	//TODO: [PROJECT'24.MS2 - #18] [4] SHARED MEMORY [USER SIDE] - smalloc()
 	// Write your code here, remove the panic and write your code
 //	panic("smalloc() is not implemented yet...!!");
+	if (size == 0) return NULL ;
+
 	if(size<PAGE_SIZE){
 		size=PAGE_SIZE;
 	}
-	size = ROUNDUP(size, PAGE_SIZE);
-		uint32 needed_pages = size / PAGE_SIZE;
-		uint32 va = (USER_HEAP_MAX-((uint32)myEnv->u_limit + PAGE_SIZE))/PAGE_SIZE;
+			size = ROUNDUP(size, PAGE_SIZE);
+			uint32 needed_pages = size / PAGE_SIZE;
 
-		uint32 seq = 0, count = 0;
-		uint32 start_page = myEnv->u_limit + PAGE_SIZE;
-
-		for (uint32 i = start_page; i < USER_HEAP_MAX-PAGE_SIZE; i += PAGE_SIZE) {
-			uint32 x = (i - start_page) / PAGE_SIZE;
-			if (marked[x]) {
-				count = 0;
-			} else {
-				if (!count)
-					va = i;
-				count++;
-			}
-			if (count >= needed_pages)
-				break;
-		}
-
-		if (count >= needed_pages) {
-			uint32 y = (va - start_page) / PAGE_SIZE;
-			is_start[y] = 1;
-			marked[y] = 1;
-
-			for (uint32 i = y; i < y + needed_pages; i++) {
-				marked[i] = 1;
+			uint32 count = 0, va;
+			uint32 start_page = myEnv->u_limit + PAGE_SIZE;
+			for (uint32 i = start_page; i < USER_HEAP_MAX; i += PAGE_SIZE) {
+				uint32 x = (i - start_page) / PAGE_SIZE;
+				if (marked[x]) {
+					count = 0;
+				} else {
+					if (!count)
+						va = i;
+					count++;
+				}
+				if (count >= needed_pages)
+					break;
 			}
 
-			int x=sys_createSharedObject(sharedVarName,size,isWritable,(void*)va);
-			if (x ==E_NO_SHARE || x==E_SHARED_MEM_EXISTS )
-			{
-				return NULL;
-			}
-			else
-			{
-				return (void *)va;
-			}
+			if (count >= needed_pages) {
+				uint32 y = (va - start_page) / PAGE_SIZE;
+				is_start[y] = 1;
 
-
-		}
+				for (uint32 i = y; i < y + needed_pages; i++) {
+					marked[i] = 1;
+				}
+				//(char* shareName, uint32 size, uint8 isWritable,void* virtual_address)
+				int x = sys_createSharedObject(sharedVarName, size,isWritable,(void*)va);
+				if (x ==E_NO_SHARE || x==E_SHARED_MEM_EXISTS )
+				{
+					return NULL;
+				}
+				return (void *) va;
+			}
 
 	return NULL;
 }
@@ -164,28 +158,55 @@ void* sget(int32 ownerEnvID, char *sharedVarName)
 	//TODO: [PROJECT'24.MS2 - #20] [4] SHARED MEMORY [USER SIDE] - sget()
 	// Write your code here, remove the panic and write your code
 //	panic("sget() is not implemented yet...!!");
-	int size_shared_object = sys_getSizeOfSharedObject(ownerEnvID,
-				sharedVarName);
-		if (size_shared_object <= 0||size_shared_object == E_SHARED_MEM_NOT_EXISTS)
+
+	int size = sys_getSizeOfSharedObject(ownerEnvID,
+					sharedVarName);
+		if (size <= 0||size == E_SHARED_MEM_NOT_EXISTS)
 			return NULL;
-		//cprintf("gab elsize wmsh bnull \n");
-		void* allocated_VA = smalloc(sharedVarName, size_shared_object, 1);
-		//cprintf("3ml smalloc \n");
-		if(allocated_VA != NULL){
-			int shared_object = sys_getSharedObject(ownerEnvID,sharedVarName,allocated_VA);
-			//cprintf("gab elshared object  \n");
-			if(shared_object!=E_SHARED_MEM_NOT_EXISTS ){
-				//cprintf("------msh da5el null");
-				return allocated_VA;
+
+		size = ROUNDUP(size, PAGE_SIZE);
+			uint32 needed_pages = size / PAGE_SIZE;
+
+			uint32 seq = 0, count = 0, va;
+			uint32 start_page = myEnv->u_limit + PAGE_SIZE;
+			for (uint32 i = start_page; i < USER_HEAP_MAX; i += PAGE_SIZE) {
+				uint32 x = (i - start_page) / PAGE_SIZE;
+				if (marked[x]) {
+					count = 0;
+				} else {
+					if (!count)
+						va = i;
+					count++;
+				}
+				if (count >= needed_pages)
+					break;
 			}
-			else
-			{//cprintf("------da5l 1 null");
-				return NULL;
+
+			if (count >= needed_pages) {
+				uint32 y = (va - start_page) / PAGE_SIZE;
+				is_start[y] = 1;
+				marked[y] = 1;
+
+				for (uint32 i = y; i < y + needed_pages; i++) {
+					marked[i] = 1;
+				}
+
+				int x=sys_getSharedObject(ownerEnvID,sharedVarName,(void*)va);
+				if (x==E_SHARED_MEM_NOT_EXISTS )
+				{
+					return NULL;
+				}
+				else
+				{
+					return (void *)va;
+				}
+
 			}
-		}else
-		{//cprintf("------da5l 2 null");
-		    return NULL;}
+
+		return NULL;
 }
+
+
 //==================================================================================//
 //============================== BONUS FUNCTIONS ===================================//
 //==================================================================================//

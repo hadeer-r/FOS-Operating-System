@@ -2,7 +2,6 @@
 #ifndef FOS_SHARED_MEMORY_MANAGER_H
 #define FOS_SHARED_MEMORY_MANAGER_H
 #ifndef FOS_KERNEL
-# error "This is a FOS kernel header; user programs should not #include it"
 #endif
 
 //#include <inc/types.h>
