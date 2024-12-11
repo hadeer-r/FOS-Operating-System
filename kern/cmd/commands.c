@@ -80,6 +80,7 @@ struct Command commands[] =
 		{ "rub", "reads block of bytes from specific location in given environment" ,command_readuserblock, 3},
 		//TODO: [PROJECT'24.MS3 - #07] [3] PRIORITY RR Scheduler - initialize command
 
+		{"schedPRIRR","Initializing RR Shceduer",command_schedPRIRR},
 		//**************************************//
 		/* COMMANDS WITH AT LEAST ONE ARGUMENT */
 		//**************************************//
@@ -90,6 +91,20 @@ struct Command commands[] =
 		{"load", "load a single user program to mem with status = NEW", commnad_load_env, -1},
 		{"tst", "run the given test", command_tst, -1},
 };
+
+// MS3 Scheduler
+int command_schedPRIRR(int number_of_arguments, char **arguments){
+	//<numOfPriority> <quantum> <starvThresh>
+	uint32 numOfPriority;
+	uint32 quantum;
+	uint32 starvThresh;
+	numOfPriority = strtol(arguments[1], NULL, 10);
+	quantum = strtol(arguments[2], NULL, 10);
+	starvThresh = strtol(arguments[3], NULL, 10);
+	//(uint8 numOfPriorities, uint8 quantum, uint32 starvThresh)
+	sched_init_PRIRR((uint8)numOfPriority,(uint8)quantum,(uint32)starvThresh);
+	return 0;
+}
 
 //Number of commands = size of the array / size of command structure
 uint32 NUM_OF_COMMANDS  = (sizeof(commands)/sizeof(struct Command));

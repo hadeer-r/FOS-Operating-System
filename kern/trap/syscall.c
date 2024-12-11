@@ -464,6 +464,14 @@ void sys_bypassPageFault(uint8 instrLength) {
 	bypassInstrLength = instrLength;
 }
 
+
+
+//------------sched_RR
+void sys_env_set_priority(int32 envID, int priority)
+{
+	env_set_priority(envID,priority);
+}
+
 /**************************************************************************/
 /************************* SYSTEM CALLS HANDLER ***************************/
 /**************************************************************************/
