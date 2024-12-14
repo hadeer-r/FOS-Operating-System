@@ -231,12 +231,15 @@ void sfree(void* virtual_address) {
 	{
 		 va= ROUNDDOWN((int32)virtual_address,PAGE_SIZE);
 	}*/
-	if (va <= KERNEL_HEAP_START || va > KERNEL_HEAP_MAX)
+	cprintf("-----1------\n");
+	int masked=sys_get_shared_id((void*)virtual_address);
+	cprintf("-----mask done------\n");
+	if (masked == E_SHARED_MEM_NOT_EXISTS)
 	{
-		cprintf("not in the kernel memo\n");
+		panic (" no shared memory exists \n");
 	}
-	int32 masked= (va &0x7FFFFFFF);
 	sys_freeSharedObject(masked,(void*)va);
+	cprintf("-----freedone------\n");
 
 }
 
