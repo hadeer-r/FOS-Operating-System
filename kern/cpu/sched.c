@@ -252,18 +252,22 @@ void sched_init_PRIRR(uint8 numOfPriorities, uint8 quantum, uint32 starvThresh)
 //	panic("Not implemented yet");
 //	cprintf("number of priorities is %d\n",numOfPriorities);
 	sched_set_starv_thresh(starvThresh);
+	num_of_ready_queues=numOfPriorities;
+	ProcessQueues.env_ready_queues = kmalloc(num_of_ready_queues*sizeof(struct Env_Queue));
+	quantums = kmalloc(num_of_ready_queues * sizeof(uint8)) ;
+
 	quantums[0]=quantum;
-	kclock_set_quantum(quantums[0]);
+
 
 	for(int i=0;i<numOfPriorities;i++){
 		init_queue(&ProcessQueues.env_ready_queues[i]);
 	}
-	num_of_ready_queues=numOfPriorities;
+
 
 	init_queue(&ProcessQueues.env_new_queue);
 	init_queue(&ProcessQueues.env_exit_queue);
 
-	init_spinlock(&ProcessQueues.qlock, "process queues lock");
+//	init_spinlock(&ProcessQueues.qlock, "process queues lock");
 	//=========================================
 	//DON'T CHANGE THESE LINES=================
 	uint16 cnt0 = kclock_read_cnt0_latch() ; //read after write to ensure it's set to the desired value
@@ -355,30 +359,28 @@ struct Env* fos_scheduler_PRIRR()
 	//TODO: [PROJECT'24.MS3 - #08] [3] PRIORITY RR Scheduler - fos_scheduler_PRIRR
 	//Your code is here
 	//Comment the following line
-//	struct Env *nextEnv = NULL;
-//	struct Env *cur_proc_cpu = get_cpu_proc();
-//	if(cur_proc_cpu!=NULL){
-//		acquire_spinlock(&ProcessQueues.qlock);
-//		sched_insert_ready(cur_proc_cpu);
-//		release_spinlock(&ProcessQueues.qlock);
-//	}
-//	acquire_spinlock(&ProcessQueues.qlock);
-//
-//	for(int i=0;i<num_of_ready_queues;i++){
-//
-//		if(queue_size(&ProcessQueues.env_ready_queues[i])==0){
-//			continue;
-//		}
-//		nextEnv=dequeue(&ProcessQueues.env_ready_queues[i]);
-//
-//		release_spinlock(&ProcessQueues.qlock);
-//		break;
-//	}
-//
-//	kclock_set_quantum(quantums[0]);
-//	return nextEnv;
+	struct Env *nextEnv = NULL;
+	struct Env *cur_proc_cpu = get_cpu_proc();
+	if(cur_proc_cpu!=NULL){
+		acquire_spinlock(&ProcessQueues.qlock);
+		sched_insert_ready(cur_proc_cpu);
+		release_spinlock(&ProcessQueues.qlock);
+	}
 
-	panic("Not implemented yet");
+	for(int i=0;i<num_of_ready_queues;i++){
+
+		if(queue_size(&ProcessQueues.env_ready_queues[i])==0){
+			continue;
+		}
+		nextEnv=dequeue(&ProcessQueues.env_ready_queues[i]);
+
+		break;
+	}
+
+	kclock_set_quantum(quantums[0]);
+	return nextEnv;
+
+//	panic("Not implemented yet");
 }
 
 //========================================

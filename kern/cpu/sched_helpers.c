@@ -267,6 +267,7 @@ void sched_new_env(struct Env* e)
 	}
 
 	release_spinlock(&(ProcessQueues.qlock)); 	//CS on Qs
+	cprintf("locked is released--------\n");
 	  //cprintf("\n[SCHED_NEW_ENV] release: lock status after = %d\n", qlock.locked);
 }
 
@@ -718,11 +719,15 @@ void env_set_priority(int envID, int priority)
 
 
 	if(proc->env_status==ENV_READY){
-		acquire_spinlock(&ProcessQueues.qlock);
+//		acquire_spinlock(&ProcessQueues.qlock);
+
 		remove_from_queue(&ProcessQueues.env_ready_queues[proc->priority], proc);
+//		release_spinlock(&ProcessQueues.qlock);
+
 		proc->priority=priority;
 		sched_insert_ready(proc);
-		release_spinlock(&ProcessQueues.qlock);
+
+
 		return;
 	}
 	proc->priority=priority;
