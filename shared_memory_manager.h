@@ -10,7 +10,11 @@
 //#include <inc/memlayout.h>
 #include <inc/environment_definitions.h>
 #include <kern/conc/spinlock.h>
-
+struct idref
+{
+	int32 id ;
+	uint32 refid ;
+};
 struct Share
 {
 	//Unique ID for this Share object

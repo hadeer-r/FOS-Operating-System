@@ -235,7 +235,7 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address)
 	    }
 	    struct Share* share = get_share(ownerID, shareName);
 
-	    //acquire_spinlock(&AllShares.shareslock);
+	    acquire_spinlock(&AllShares.shareslock);
 	    uint32 nsize=ROUNDUP(share->size,PAGE_SIZE)/PAGE_SIZE;
 	       for (uint32 i = 0; i < nsize; i++)
 	          {
@@ -254,7 +254,7 @@ int getSharedObject(int32 ownerID, char* shareName, void* virtual_address)
 	             // cprintf("mapmazbota \n");
 	             // cprintf("i = %d ,n_frames= %d \n",i ,share->n_frames);
 	          }
-	       	   //release_spinlock(&AllShares.shareslock);
+	       	   release_spinlock(&AllShares.shareslock);
 
 	          share->references++;
 	          uint32 num = (uint32 )share->references-1  ;
@@ -351,6 +351,7 @@ int freeSharedObject(int32 sharedObjectID, void* startVA) {
         return E_SHARED_MEM_NOT_EXISTS;
     }
 
+
     uint32 va = ROUNDDOWN((uint32)startVA, PAGE_SIZE);
 
     struct Share* current_share = NULL;
@@ -366,7 +367,17 @@ int freeSharedObject(int32 sharedObjectID, void* startVA) {
         //cprintf("Error: Shared object with ID=%d not found\n", sharedObjectID);
         return E_SHARED_MEM_NOT_EXISTS;
     }
-
+    uint32 refid = 0;
+    acquire_spinlock(&AllShares.shareslock);
+   for (uint32 i = 0 ; i<=current_share->references;i++){
+        		if ((uint32)current_share->freeva[i]== (uint32)startVA)
+        		{
+        	        	//cprintf("shared object found\n");
+        	        	refid = i ;
+        	        	break ;
+        	        }
+        	}
+   release_spinlock(&AllShares.shareslock);
     uint32* ptr_page_table = NULL;
     int size = getSizeOfSharedObject(current_share->ownerID, current_share->name);
 
@@ -386,8 +397,13 @@ int freeSharedObject(int32 sharedObjectID, void* startVA) {
             }
         }
     }
+    acquire_spinlock(&AllShares.shareslock);
+    for (uint32 i = 0 ; i<current_share->references;i++){
+    	current_share->freeva[i]= (uint32)current_share->freeva[i+1];
 
+           	}
     current_share->references--;
+    release_spinlock(&AllShares.shareslock);
     //cprintf("freeSharedObject: References after decrement: %d\n", current_share->references);
 
     if (current_share->references == 0) {
