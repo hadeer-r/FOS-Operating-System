@@ -79,6 +79,8 @@ int command_print_kheap_plac(int number_of_arguments, char **arguments);
 int command_disable_modified_buffer(int number_of_arguments, char **arguments);
 int command_enable_modified_buffer(int number_of_arguments, char **arguments);
 
+int command_schedPRIRR(int number_of_arguments, char **arguments);
+
 //2016
 int command_disable_buffering(int number_of_arguments, char **arguments);
 int command_enable_buffering(int number_of_arguments, char **arguments);
