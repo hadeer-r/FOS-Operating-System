@@ -98,7 +98,7 @@ fos_scheduler(void)
 
 			if(next_env != NULL)
 			{
-				//cprintf("\nScheduler select program '%s' [%d]... clock counter = %d\n", next_env->prog_name, next_env->env_id, kclock_read_cnt0());
+//				cprintf("\nScheduler select program '%s' [%d]... clock counter = %d\n", next_env->prog_name, next_env->env_id,kclock_read_cnt0());
 
 				/*2024: Replaced by context_switch()*/
 				//env_run(next_env);
@@ -379,7 +379,7 @@ struct Env* fos_scheduler_PRIRR()
 
 		break;
 	}
-
+//	cprintf("trap after getting next env and for loop\n");
 	kclock_set_quantum(quantums[0]);
 	return nextEnv;
 
@@ -394,62 +394,53 @@ void clock_interrupt_handler(struct Trapframe* tf)
 {
 	if (isSchedMethodPRIRR())
 	{
+
 		//TODO: [PROJECT'24.MS3 - #09] [3] PRIORITY RR Scheduler - clock_interrupt_handler
 		//Your code is here
+		acquire_spinlock(&ProcessQueues.qlock);
 		struct Env* cur = get_cpu_proc();
+
 		int num_prio=num_of_ready_queues;
 		int test_loop=0;
 		for(int i=0;i<num_prio;i++){
 			struct Env* tmp;
 			LIST_FOREACH(tmp,&ProcessQueues.env_ready_queues[i]){
 				tmp->tck_env++;
-				test_loop++;
-				if(test_loop>100){
-					cprintf("infinite loop in LIST_FOREACH(tmp,&ProcessQueues.env_ready_queues[i])\n");
-				}
-			}
-			test_loop++;
-			if(test_loop>100){
-				cprintf("infinite loop in r(int i=0;i<num_prio;i++)\n");
+
 			}
 
+
 		}
-		test_loop++;
-		for(int i=num_prio-1;i>=0;i--){
+		for(int i=num_prio-1;i>0;i--){
 			if(queue_size(&ProcessQueues.env_ready_queues[i])==0){
 								continue;
 			}
 			while(queue_size(&ProcessQueues.env_ready_queues[i])!=0){
 				struct Env* tmp=LIST_LAST(&ProcessQueues.env_ready_queues[i]);
-				// adding it in high priority
-				if(tmp->nClocks >= max_threshold){
+				if(tmp->tck_env >= max_threshold){
 					struct Env* to_insert = dequeue(&ProcessQueues.env_ready_queues[i]);
-					to_insert->priority++;
+					to_insert->priority--;
 					sched_insert_ready(to_insert);
 				}
 				else {
 					break;
 				}
-				test_loop++;
-				if(test_loop>100){
-					cprintf("infinite loop in while\n");
-				}
+
 
 			}
-			test_loop++;
-			if(test_loop>100){
-				cprintf("infinite loop in for(int i=num_prio-1;i>=0;i--)\n");
-			}
+
 
 		}
 
 
-
+		release_spinlock(&ProcessQueues.qlock);
 		//Comment the following line
 //		panic("Not implemented yet clock interrupt handler");
+//		cprintf("clock done\n");
 	}
 
 
+//	cprintf("\n");
 
 	/********DON'T CHANGE THESE LINES***********/
 	ticks++ ;
