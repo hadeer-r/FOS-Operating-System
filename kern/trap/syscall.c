@@ -350,21 +350,18 @@ void sys_make_blocked(struct __semdata* data) {
 	//sleep();
 	struct Env* env = get_cpu_proc();
 	acquire_spinlock(&ProcessQueues.qlock);
-	data->lock = 0;
 	enqueue(&data->queue, env);
+	data->lock = 0;
 	env->env_status = ENV_BLOCKED;
-	//acquire_spinlock(&ProcessQueues.qlock); //to protect ANY process queue
-	//acquire_spinlock(lk);
 	sched();
 	release_spinlock(&ProcessQueues.qlock);
-	data->lock = 1;	// check ,aquire
+	while (xchg(&(data->lock), 1) != 0);
 }
 
 void sys_make_ready(struct __semdata* data) {
 	acquire_spinlock(&ProcessQueues.qlock);
-	data->lock = 0;
 	struct Env* env = dequeue(&data->queue);
-	sched_insert_ready0(env);// after collecting remove zero
+	sched_insert_ready(env);	// after collecting remove zero
 	release_spinlock(&ProcessQueues.qlock);
 }
 /*******************************/
@@ -399,7 +396,7 @@ static int32 sys_getenvid(void) {
 
 //2017
 static int32 sys_getenvindex(void) {
-	//return cur_env->env_id;
+//return cur_env->env_id;
 	return (cur_env - envs);
 }
 
@@ -428,7 +425,7 @@ static int sys_destroy_env(int32 envid) {
 	} else {
 		cprintf("[%08x] destroying %08x\n", cur_env->env_id, e->env_id);
 	}
-	//2015
+//2015
 	sched_kill_env(e->env_id);
 
 	return 0;
@@ -436,12 +433,12 @@ static int sys_destroy_env(int32 envid) {
 
 //Just place the current env into the EXIT queue & schedule the next one
 static void sys_exit_env() {
-	//2015
+//2015
 	env_exit();
 
-	//2024: if returned here, then it's not the current environment. So, just return
-	//env_run_cmd_prmpt();
-	//context_switch(&(cur_env->context), mycpu()->scheduler);
+//2024: if returned here, then it's not the current environment. So, just return
+//env_run_cmd_prmpt();
+//context_switch(&(cur_env->context), mycpu()->scheduler);
 
 }
 
@@ -450,19 +447,19 @@ static void sys_exit_env() {
 int sys_create_env(char* programName, unsigned int page_WS_size,
 		unsigned int LRU_second_list_size,
 		unsigned int percent_WS_pages_to_remove) {
-	//cprintf("\nAttempt to create a new env\n");
+//cprintf("\nAttempt to create a new env\n");
 
 	struct Env* env = env_create(programName, page_WS_size,
 			LRU_second_list_size, percent_WS_pages_to_remove);
 	if (env == NULL) {
 		return E_ENV_CREATION_ERROR;
 	}
-	//cprintf("\nENV %d is created\n", env->env_id);
+//cprintf("\nENV %d is created\n", env->env_id);
 
-	//2015
+//2015
 	sched_new_env(env);
 
-	//cprintf("\nENV %d is scheduled as NEW\n", env->env_id);
+//cprintf("\nENV %d is scheduled as NEW\n", env->env_id);
 
 	return env->env_id;
 }
@@ -498,12 +495,12 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4,
 	cur_env = get_cpu_proc();
 	assert(cur_env != NULL);
 
-	//cprintf("syscallno = %d\n", syscallno);
-	// Call the function corresponding to the 'syscallno' parameter.
-	// Return any appropriate return value.
+//cprintf("syscallno = %d\n", syscallno);
+// Call the function corresponding to the 'syscallno' parameter.
+// Return any appropriate return value.
 	switch (syscallno) {
-	//TODO: [PROJECT'24.MS1 - #02] [2] SYSTEM CALLS - Add suitable code here
-	//  MS1
+//TODO: [PROJECT'24.MS1 - #02] [2] SYSTEM CALLS - Add suitable code here
+//  MS1
 	case SYS_Sbrk:
 		return (uint32) sys_sbrk((int) a1);
 		break;
@@ -695,7 +692,7 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4,
 		return 0;
 		break;
 	}
-	//panic("syscall not implemented");
+//panic("syscall not implemented");
 	return -E_INVAL;
 }
 
