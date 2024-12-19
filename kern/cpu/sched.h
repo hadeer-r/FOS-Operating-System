@@ -43,6 +43,7 @@ struct
 #endif
 	uint8 num_of_ready_queues ;			// Number of ready queue(s)
 
+	uint32 max_threshold;
 //===============
 
 //2015
