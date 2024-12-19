@@ -2,8 +2,7 @@
 #define FOS_INC_SYSCALL_H
 
 /* system call numbers */
-enum
-{
+enum {
 	SYS_cputs = 0,
 	SYS_cputc,
 	SYS_cgetc,
@@ -51,9 +50,12 @@ enum
 	SYS_env_set_priority,
 	/*2024*/
 	//TODO: [PROJECT'24.MS1 - #02] [2] SYSTEM CALLS - Add suitable code here
-    SYS_Sbrk,
+	SYS_Sbrk,
 	SYS_Free_User_Mem,
 	SYS_Allocate_User_Mem,
+	SYS_INTIALIZE_SEM_Q,
+	SYS_MAKE_BLOCKED,
+	SYS_MAKE_READY,
 	//=====================================================================
 	NSYSCALLS
 };

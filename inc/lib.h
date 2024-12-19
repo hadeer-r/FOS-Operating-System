@@ -85,9 +85,15 @@ int 	sys_pf_calculate_allocated_pages(void);
 
 //Semaphores
 
+void sys_intialize_sem_q(struct __semdata* data);
+void sys_make_blocked(struct __semdata* data);
+void sys_make_ready(struct __semdata* data);
+
+
 
 // shced_RR
 void sys_env_set_priority(int32 envID, int priority);
+
 
 
 //Sharing
