@@ -338,9 +338,35 @@ void sys_set_uheap_strategy(uint32 heapStrategy) {
 }
 
 /*******************************/
+
 /* SEMAPHORES SYSTEM CALLS */
 /*******************************/
 //[PROJECT'24.MS3] ADD SUITABLE CODE HERE
+void sys_intialize_sem_q(struct __semdata* data) {
+	init_queue(&data->queue);
+}
+void sys_make_blocked(struct __semdata* data) {
+
+	//sleep();
+	struct Env* env = get_cpu_proc();
+	acquire_spinlock(&ProcessQueues.qlock);
+	data->lock = 0;
+	enqueue(&data->queue, env);
+	env->env_status = ENV_BLOCKED;
+	//acquire_spinlock(&ProcessQueues.qlock); //to protect ANY process queue
+	//acquire_spinlock(lk);
+	sched();
+	release_spinlock(&ProcessQueues.qlock);
+	data->lock = 1;	// check ,aquire
+}
+
+void sys_make_ready(struct __semdata* data) {
+	acquire_spinlock(&ProcessQueues.qlock);
+	data->lock = 0;
+	struct Env* env = dequeue(&data->queue);
+	sched_insert_ready0(env);// after collecting remove zero
+	release_spinlock(&ProcessQueues.qlock);
+}
 /*******************************/
 /* SHARED MEMORY SYSTEM CALLS */
 /*******************************/
@@ -656,31 +682,20 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4,
 	case NSYSCALLS:
 		return -E_INVAL;
 		break;
-
+	case SYS_INTIALIZE_SEM_Q:
+		sys_intialize_sem_q((struct __semdata*) a1);
+		return 0;
+		break;
+	case SYS_MAKE_BLOCKED:
+		sys_make_blocked((struct __semdata*) a1);
+		return 0;
+		break;
+	case SYS_MAKE_READY:
+		sys_make_ready((struct __semdata*) a1);
+		return 0;
+		break;
 	}
 	//panic("syscall not implemented");
 	return -E_INVAL;
-}
-
-void intialize_sem_q(struct semaphore sem) {
-	init_queue(&sem.semdata->queue);
-}
-void make_blocked(struct semaphore sem) {
-
-	//sleep();
-	struct Env* env = get_cpu_proc();
-	enqueue(&sem.semdata->queue, env);
-	env->env_status = ENV_BLOCKED;
-	sem.semdata->lock=0;
-	acquire_spinlock(&ProcessQueues.qlock); //to protect ANY process queue
-	//acquire_spinlock(lk);
-	sched();
-	release_spinlock(&ProcessQueues.qlock);
-	sem.semdata->lock=1;
-}
-
-void make_ready(struct semaphore sem) {
-	struct Env* env = dequeue(&sem.semdata->queue);
-	sched_insert_ready(env);
 }
 

@@ -7,14 +7,14 @@ struct semaphore create_semaphore(char *semaphoreName, uint32 value) {
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	//panic("create_semaphore is not implemented yet");
 	uint32 sz = sizeof(struct semaphore);
-	void*va = smalloc(semaphoreName, sz, 1); // what if i can not allocate???
-	if (va == NULL)
-		panic("no memory to create");
 	struct semaphore sem;
+	sem.semdata = (struct __semdata*) smalloc(semaphoreName, sz, 1); // what if i can not allocate???
+	if (sem.semdata == NULL)
+		return sem;
 	sem.semdata->count = value;
 	sem.semdata->lock = 0;
-	sem.semdata->name= semaphoreName;
-	intialize_sem_q(sem); // sys_call
+	strcpy(sem.semdata->name, semaphoreName);
+	sys_intialize_sem_q(sem.semdata); // sys_call
 	return sem;
 }
 struct semaphore get_semaphore(int32 ownerEnvID, char* semaphoreName) {
@@ -22,11 +22,9 @@ struct semaphore get_semaphore(int32 ownerEnvID, char* semaphoreName) {
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	//panic("get_semaphore is not implemented yet");
 
-	void* sem = sget(ownerEnvID, semaphoreName); // what if null
-	if (sem == NULL)
-		panic("there is no such semaphore");
-	return (struct semaphore*)sem;
-
+	struct semaphore sem;
+	sem.semdata = (struct __semdata*) sget(ownerEnvID, semaphoreName); // what if null
+	return sem;
 }
 
 void __acquire(struct semaphore s) {
@@ -40,8 +38,7 @@ void wait_semaphore(struct semaphore sem) {
 	sem.semdata->count--;
 
 	if (sem.semdata->count < 0) {
-		//struct Env* env = get_cpu_proc();
-		make_blocked(sem);
+		sys_make_blocked(sem.semdata);
 	}
 	__release(sem);
 }
@@ -52,7 +49,7 @@ void signal_semaphore(struct semaphore sem) {
 
 	if (sem.semdata->count <= 0) {
 
-		make_ready(sem);
+		sys_make_ready(sem.semdata);
 	}
 	__release(sem);
 

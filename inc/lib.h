@@ -84,9 +84,9 @@ void 	sys_set_uheap_strategy(uint32 heapStrategy);
 int 	sys_pf_calculate_allocated_pages(void);
 
 //Semaphores
-void intialize_sem_q(struct semaphore sem);
-void make_blocked(struct semaphore sem);
-void make_ready(struct semaphore sem);
+void sys_intialize_sem_q(struct __semdata* data);
+void sys_make_blocked(struct __semdata* data);
+void sys_make_ready(struct __semdata* data);
 //Sharing
 //2017
 int 	sys_createSharedObject(char* shareName, uint32 size, uint8 isWritable, void* virtual_address);

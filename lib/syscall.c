@@ -288,13 +288,13 @@ void sys_allocate_user_mem(uint32 virtual_address, uint32 size) {
 //	panic("not implemented yet");
 }
 
-void intialize_sem_q(struct semaphore sem) {
-	syscall(INTIALIZE_SEM_Q, sem, 0, 0, 0, 0);
+void sys_intialize_sem_q(struct __semdata* data) {
+	syscall(SYS_INTIALIZE_SEM_Q, (uint32) data, 0, 0, 0, 0);
 }
-void make_blocked(struct semaphore sem) {
-	syscall(MAKE_BLOCKED, sem, 0, 0, 0, 0);
+void sys_make_blocked(struct __semdata* data){
+	syscall(SYS_MAKE_BLOCKED, (uint32) data, 0, 0, 0, 0);
 }
-void make_ready(struct semaphore sem) {
-	syscall(MAKE_READY, sem, 0, 0, 0, 0);
+void sys_make_ready(struct __semdata* data) {
+	syscall(SYS_MAKE_READY,(uint32) data, 0, 0, 0, 0);
 }
 

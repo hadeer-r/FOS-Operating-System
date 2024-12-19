@@ -52,9 +52,9 @@ enum {
 	SYS_Sbrk,
 	SYS_Free_User_Mem,
 	SYS_Allocate_User_Mem,
-	INTIALIZE_SEM_Q,
-	MAKE_BLOCKED,
-	MAKE_READY,
+	SYS_INTIALIZE_SEM_Q,
+	SYS_MAKE_BLOCKED,
+	SYS_MAKE_READY,
 	//=====================================================================
 	NSYSCALLS
 };
