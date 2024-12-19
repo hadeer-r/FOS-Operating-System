@@ -53,6 +53,7 @@ enum
     SYS_Sbrk,
 	SYS_Free_User_Mem,
 	SYS_Allocate_User_Mem,
+	SYS_env_set_priority,
 	//=====================================================================
 	NSYSCALLS
 };

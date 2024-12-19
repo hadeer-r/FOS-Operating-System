@@ -99,6 +99,7 @@ struct Env {
 	//================
 	/*MAIN INFO...*/
 	//================
+	uint32 tck_env;
 	struct Trapframe *env_tf;		// Saved registers during the trap (at the top of the user kernel stack)
 	struct Context *context;		// Saved registers for context switching (env <--> scheduler) (below the trap frame at the user kernel stack)
 	LIST_ENTRY(Env) prev_next_info;	// Free list link pointers
