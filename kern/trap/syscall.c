@@ -150,7 +150,7 @@ static int __sys_allocate_page(void *va, int perm) {
 		//		we are using an unsed VA in the invalid area of kernel at 0xef800000 (the current USER_LIMIT)
 		//		to do temp initialization of a frame.
 		map_frame(e->env_page_directory, ptr_frame_info, USER_LIMIT,
-				PERM_WRITEABLE);
+		PERM_WRITEABLE);
 		memset((void*) USER_LIMIT, 0, PAGE_SIZE);
 
 		// Temporarily increase the references to prevent unmap_frame from removing the frame
@@ -341,7 +341,6 @@ void sys_set_uheap_strategy(uint32 heapStrategy) {
 /* SEMAPHORES SYSTEM CALLS */
 /*******************************/
 //[PROJECT'24.MS3] ADD SUITABLE CODE HERE
-
 /*******************************/
 /* SHARED MEMORY SYSTEM CALLS */
 /*******************************/
@@ -480,7 +479,7 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4,
 	//TODO: [PROJECT'24.MS1 - #02] [2] SYSTEM CALLS - Add suitable code here
 	//  MS1
 	case SYS_Sbrk:
-		return (uint32)sys_sbrk((int) a1);
+		return (uint32) sys_sbrk((int) a1);
 		break;
 	case SYS_Free_User_Mem:
 		sys_free_user_mem(a1, a2);
@@ -662,3 +661,26 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4,
 	//panic("syscall not implemented");
 	return -E_INVAL;
 }
+
+void intialize_sem_q(struct semaphore sem) {
+	init_queue(&sem.semdata->queue);
+}
+void make_blocked(struct semaphore sem) {
+
+	//sleep();
+	struct Env* env = get_cpu_proc();
+	enqueue(&sem.semdata->queue, env);
+	env->env_status = ENV_BLOCKED;
+	sem.semdata->lock=0;
+	acquire_spinlock(&ProcessQueues.qlock); //to protect ANY process queue
+	//acquire_spinlock(lk);
+	sched();
+	release_spinlock(&ProcessQueues.qlock);
+	sem.semdata->lock=1;
+}
+
+void make_ready(struct semaphore sem) {
+	struct Env* env = dequeue(&sem.semdata->queue);
+	sched_insert_ready(env);
+}
+

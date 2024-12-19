@@ -28,5 +28,7 @@ struct semaphore get_semaphore(int32 ownerEnvID, char* semaphoreName);
 void wait_semaphore(struct semaphore sem);
 void signal_semaphore(struct semaphore sem);
 int semaphore_count(struct semaphore sem);
+void __acquire(struct semaphore s);
+void __release(struct semaphore s);
 
 #endif /*FOS_INC_SEMAPHORE_H*/
