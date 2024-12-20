@@ -73,13 +73,13 @@ inline struct FrameInfo** create_frames_storage(int numOfFrames)
 	if( numOfFrames <= 0){
 		return NULL;
 	}
-	//cprintf("\n---->start calling kmalloc in create frame storage\n");
+
+	acquire_spinlock(&MemFrameLists.mfllock);
 	struct FrameInfo** storage_array = kmalloc(numOfFrames*sizeof(struct  FrameInfo* ));
+	release_spinlock(&MemFrameLists.mfllock);
 	    if (storage_array == NULL) {
 	        return NULL;
 	    }
-
-	   // cprintf("\n---->end calling kmalloc in create frame storage\n");
 
 
 	for(int i = 0 ; i < numOfFrames ; i++){
@@ -100,12 +100,12 @@ struct Share* create_share(int32 ownerID, char* shareName, uint32 size, uint8 is
 	//COMMENT THE FOLLOWING LINE BEFORE START CODING
 	//panic("create_share is not implemented yet");
 	//Your Code is Here...
-	//cprintf("\n---->start calling kmalloc in create share\n");
-//	cprintf("=========frames size:%d\n",LIST_SIZE(&MemFrameLists.free_frame_list));
+
+	acquire_spinlock(&MemFrameLists.mfllock);
 	struct Share* sharedObj = kmalloc(sizeof(struct Share));
-//	cprintf("=========frames size:%d\n",LIST_SIZE(&MemFrameLists.free_frame_list));
+	release_spinlock(&MemFrameLists.mfllock);
 	uint32 num_pages = ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE;
-	//cprintf("\n---->end calling kmalloc in create share\n");
+
 
 
 	if (sharedObj == NULL) {
@@ -120,9 +120,9 @@ struct Share* create_share(int32 ownerID, char* shareName, uint32 size, uint8 is
 	sharedObj->ID = ((int32)sharedObj & 0x7FFFFFFF);
 
 	strcpy(sharedObj->name, shareName);
-//	cprintf("=========frames size:%d\n",LIST_SIZE(&MemFrameLists.free_frame_list));
+
 	sharedObj->framesStorage = create_frames_storage(num_pages);
-//	cprintf("=========frames size:%d\n",LIST_SIZE(&MemFrameLists.free_frame_list));
+
 
 		if (sharedObj->framesStorage  == NULL) {
 			kfree(sharedObj->framesStorage );

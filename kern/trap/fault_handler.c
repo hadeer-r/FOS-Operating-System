@@ -332,146 +332,148 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va) {
 		// Write your code here, remove the panic and write your code
 
 //		panic("page_fault_handler() Replacement is not implemented yet...!!");
-		int replaced = 0;
-		if(page_WS_max_sweeps >0){
-			while(!replaced)	{
-				int perm = pt_get_page_permissions(faulted_env->env_page_directory,faulted_env->page_last_WS_element->virtual_address);
-					if(!(perm & PERM_USED)){
-						faulted_env->page_last_WS_element->sweeps_counter ++;
-						if(faulted_env->page_last_WS_element->sweeps_counter == page_WS_max_sweeps){
-								uint32* ptr_page_table;
-								struct FrameInfo *ptr_frame_info = get_frame_info(faulted_env->env_page_directory,faulted_env->page_last_WS_element->virtual_address,&ptr_page_table);
-								 if(perm & PERM_MODIFIED){
-										pf_update_env_page(faulted_env,faulted_env->page_last_WS_element->virtual_address,ptr_frame_info);
-								}
-						         int map_faulted_page = map_frame(faulted_env->env_page_directory,ptr_frame_info,fault_va,PERM_WRITEABLE | PERM_PRESENT | PERM_USER | PERM_MARKED);
-									if(map_faulted_page == E_NO_MEM){
-											panic("No page table found and there's no free frame for creating it.");
-											}
-						        int read = pf_read_env_page(faulted_env, (void *) fault_va);
-									if (read == E_PAGE_NOT_EXIST_IN_PF) {
-										if ((fault_va >= USER_HEAP_START && fault_va < USER_HEAP_MAX)
-													|| (fault_va >= USTACKBOTTOM && fault_va < USTACKTOP)) {
+		// int replaced = 0;
+		// if(page_WS_max_sweeps >0){
+		// 	while(!replaced)	{
+		// 		int perm = pt_get_page_permissions(faulted_env->env_page_directory,faulted_env->page_last_WS_element->virtual_address);
+		// 			if(!(perm & PERM_USED)){
+		// 				faulted_env->page_last_WS_element->sweeps_counter ++;
+		// 				if(faulted_env->page_last_WS_element->sweeps_counter == page_WS_max_sweeps){
+		// 						uint32* ptr_page_table;
+		// 						struct FrameInfo *ptr_frame_info = get_frame_info(faulted_env->env_page_directory,faulted_env->page_last_WS_element->virtual_address,&ptr_page_table);
+		// 						 if(perm & PERM_MODIFIED){
+		// 								pf_update_env_page(faulted_env,faulted_env->page_last_WS_element->virtual_address,ptr_frame_info);
+		// 						}
+		// 				         int map_faulted_page = map_frame(faulted_env->env_page_directory,ptr_frame_info,fault_va,PERM_WRITEABLE | PERM_PRESENT | PERM_USER | PERM_MARKED);
+		// 							if(map_faulted_page == E_NO_MEM){
+		// 									panic("No page table found and there's no free frame for creating it.");
+		// 									}
+		// 				        int read = pf_read_env_page(faulted_env, (void *) fault_va);
+		// 							if (read == E_PAGE_NOT_EXIST_IN_PF) {
+		// 								if ((fault_va >= USER_HEAP_START && fault_va < USER_HEAP_MAX)
+		// 											|| (fault_va >= USTACKBOTTOM && fault_va < USTACKTOP)) {
 
-												} else {
-													env_exit();
-												}
-												}
-								struct WorkingSetElement* next_element = LIST_NEXT(faulted_env->page_last_WS_element);
-								env_page_ws_invalidate(faulted_env,faulted_env->page_last_WS_element->virtual_address);
-								struct WorkingSetElement*new_element = env_page_ws_list_create_element(faulted_env, fault_va);
-								if (new_element == NULL) {
-										panic("Failed to create a new Working Set element!");
-									}
-								if(next_element != NULL){
-										LIST_INSERT_BEFORE(&(faulted_env->page_WS_list),next_element,new_element);
-								}
-								else{
-									LIST_INSERT_TAIL(&(faulted_env->page_WS_list),new_element);
-								}
-								faulted_env->page_last_WS_element = next_element ? next_element : LIST_FIRST(&(faulted_env->page_WS_list));
-								replaced = 1;
-								break;
-								}
-								}
-								else{
-									faulted_env->page_last_WS_element->sweeps_counter = 0;
-									pt_set_page_permissions(faulted_env->env_page_directory,faulted_env->page_last_WS_element->virtual_address,0,PERM_USED);
-									}
-					faulted_env->page_last_WS_element = LIST_NEXT(faulted_env->page_last_WS_element) ? LIST_NEXT(faulted_env->page_last_WS_element) : LIST_FIRST(&(faulted_env->page_WS_list));
-								}
-								}
-		 if (page_WS_max_sweeps < 0){
-						while(!replaced)	{
-							int perm = pt_get_page_permissions(faulted_env->env_page_directory,faulted_env->page_last_WS_element->virtual_address);
-							if(!(perm & PERM_MODIFIED)){
-								if(!(perm & PERM_USED)){
-									faulted_env->page_last_WS_element->sweeps_counter ++;
-									if(faulted_env->page_last_WS_element->sweeps_counter == (page_WS_max_sweeps *-1)){
-										uint32* ptr_page_table;
-										struct FrameInfo *ptr_frame_info = get_frame_info(faulted_env->env_page_directory,faulted_env->page_last_WS_element->virtual_address,&ptr_page_table);
-										int map_faulted_page = map_frame(faulted_env->env_page_directory,ptr_frame_info,fault_va,PERM_WRITEABLE | PERM_PRESENT | PERM_USER | PERM_MARKED);
-										if(map_faulted_page == E_NO_MEM){
-											panic("No page table found and there's no free frame for creating it.");
-										}
-										int read = pf_read_env_page(faulted_env, (void *) fault_va);
-												if (read == E_PAGE_NOT_EXIST_IN_PF) {
-													if ((fault_va >= USER_HEAP_START && fault_va < USER_HEAP_MAX)
-															|| (fault_va >= USTACKBOTTOM && fault_va < USTACKTOP)) {
+		// 										} else {
+		// 											env_exit();
+		// 										}
+		// 										}
+		// 						struct WorkingSetElement* next_element = LIST_NEXT(faulted_env->page_last_WS_element);
+		// 						env_page_ws_invalidate(faulted_env,faulted_env->page_last_WS_element->virtual_address);
+		// 						struct WorkingSetElement*new_element = env_page_ws_list_create_element(faulted_env, fault_va);
+		// 						if (new_element == NULL) {
+		// 								panic("Failed to create a new Working Set element!");
+		// 							}
+		// 						if(next_element != NULL){
+		// 								LIST_INSERT_BEFORE(&(faulted_env->page_WS_list),next_element,new_element);
+		// 						}
+		// 						else{
+		// 							LIST_INSERT_TAIL(&(faulted_env->page_WS_list),new_element);
+		// 						}
+		// 						faulted_env->page_last_WS_element = next_element ? next_element : LIST_FIRST(&(faulted_env->page_WS_list));
+		// 						replaced = 1;
+		// 						break;
+		// 						}
+		// 						}
+		// 						else{
+		// 							faulted_env->page_last_WS_element->sweeps_counter = 0;
+		// 							pt_set_page_permissions(faulted_env->env_page_directory,faulted_env->page_last_WS_element->virtual_address,0,PERM_USED);
+		// 							}
+		// 			faulted_env->page_last_WS_element = LIST_NEXT(faulted_env->page_last_WS_element) ? LIST_NEXT(faulted_env->page_last_WS_element) : LIST_FIRST(&(faulted_env->page_WS_list));
+		// 						}
+		// 						}
+		// else{
+		// 				while(!replaced)	{
+		// 					int perm = pt_get_page_permissions(faulted_env->env_page_directory,faulted_env->page_last_WS_element->virtual_address);
+		// 					if(!(perm & PERM_MODIFIED)){
+		// 						if(!(perm & PERM_USED)){
+		// 							faulted_env->page_last_WS_element->sweeps_counter ++;
+		// 							if(faulted_env->page_last_WS_element->sweeps_counter == (page_WS_max_sweeps *-1)){
+		// 								uint32* ptr_page_table;
+		// 								struct FrameInfo *ptr_frame_info = get_frame_info(faulted_env->env_page_directory,faulted_env->page_last_WS_element->virtual_address,&ptr_page_table);
+		// 								int map_faulted_page = map_frame(faulted_env->env_page_directory,ptr_frame_info,fault_va,PERM_WRITEABLE | PERM_PRESENT | PERM_USER | PERM_MARKED);
+		// 								if(map_faulted_page == E_NO_MEM){
+		// 									panic("No page table found and there's no free frame for creating it.");
+		// 								}
+		// 								int read = pf_read_env_page(faulted_env, (void *) fault_va);
+		// 										if (read == E_PAGE_NOT_EXIST_IN_PF) {
+		// 											if ((fault_va >= USER_HEAP_START && fault_va < USER_HEAP_MAX)
+		// 													|| (fault_va >= USTACKBOTTOM && fault_va < USTACKTOP)) {
 
-													} else {
-														env_exit();
-													}
-												}
-									  struct WorkingSetElement* next_element = LIST_NEXT(faulted_env->page_last_WS_element);
-									  env_page_ws_invalidate(faulted_env,faulted_env->page_last_WS_element->virtual_address);
-									  struct WorkingSetElement*new_element = env_page_ws_list_create_element(faulted_env, fault_va);
-									  		if (new_element == NULL) {
-									  			panic("Failed to create a new Working Set element!");
-									  		}
-									 if(next_element != NULL){
-										 LIST_INSERT_BEFORE(&(faulted_env->page_WS_list),next_element,new_element);
-									 }
-									 else{
-										 LIST_INSERT_TAIL(&(faulted_env->page_WS_list),new_element);
-									 }
-									 faulted_env->page_last_WS_element = next_element ? next_element : LIST_FIRST(&(faulted_env->page_WS_list));
-									 replaced = 1;
-									 break;
-									}
-								}
-								else{
-									faulted_env->page_last_WS_element->sweeps_counter = 0;
-									pt_set_page_permissions(faulted_env->env_page_directory,faulted_env->page_last_WS_element->virtual_address,0,PERM_USED);
-								}
-							}
-							else{
-								if(!(perm & PERM_USED)){
-									faulted_env->page_last_WS_element->sweeps_counter ++;
-									if(faulted_env->page_last_WS_element->sweeps_counter == (page_WS_max_sweeps *-1) + 1){
-										uint32* ptr_page_table;
-										struct FrameInfo *ptr_frame_info = get_frame_info(faulted_env->env_page_directory,faulted_env->page_last_WS_element->virtual_address,&ptr_page_table);
-										pf_update_env_page(faulted_env,faulted_env->page_last_WS_element->virtual_address,ptr_frame_info);
-										int map_faulted_page = map_frame(faulted_env->env_page_directory,ptr_frame_info,fault_va,PERM_WRITEABLE | PERM_PRESENT | PERM_USER | PERM_MARKED);
-										if(map_faulted_page == E_NO_MEM){
-												panic("No page table found and there's no free frame for creating it.");
-											}
-										int read = pf_read_env_page(faulted_env, (void *) fault_va);
-										if (read == E_PAGE_NOT_EXIST_IN_PF) {
-											if ((fault_va >= USER_HEAP_START && fault_va < USER_HEAP_MAX)
-														|| (fault_va >= USTACKBOTTOM && fault_va < USTACKTOP)) {
+		// 											} else {
+		// 												env_exit();
+		// 											}
+		// 										}
+		// 							  struct WorkingSetElement* next_element = LIST_NEXT(faulted_env->page_last_WS_element);
+		// 							  env_page_ws_invalidate(faulted_env,faulted_env->page_last_WS_element->virtual_address);
+		// 							  struct WorkingSetElement*new_element = env_page_ws_list_create_element(faulted_env, fault_va);
+		// 							  		if (new_element == NULL) {
+		// 							  			panic("Failed to create a new Working Set element!");
+		// 							  		}
+		// 							 if(next_element != NULL){
+		// 								 LIST_INSERT_BEFORE(&(faulted_env->page_WS_list),next_element,new_element);
+		// 							 }
+		// 							 else{
+		// 								 LIST_INSERT_TAIL(&(faulted_env->page_WS_list),new_element);
+		// 							 }
+		// 							 faulted_env->page_last_WS_element = next_element ? next_element : LIST_FIRST(&(faulted_env->page_WS_list));
+		// 							 replaced = 1;
+		// 							 break;
+		// 							}
+		// 						}
+		// 						else{
+		// 							faulted_env->page_last_WS_element->sweeps_counter = 0;
+		// 							pt_set_page_permissions(faulted_env->env_page_directory,faulted_env->page_last_WS_element->virtual_address,0,PERM_USED);
+		// 						}
+		// 					}
+		// 					else{
+		// 						if(!(perm & PERM_USED)){
+		// 							faulted_env->page_last_WS_element->sweeps_counter ++;
+		// 							if(faulted_env->page_last_WS_element->sweeps_counter == (page_WS_max_sweeps *-1) + 1){
+		// 								uint32* ptr_page_table;
+		// 								struct FrameInfo *ptr_frame_info = get_frame_info(faulted_env->env_page_directory,faulted_env->page_last_WS_element->virtual_address,&ptr_page_table);
+		// 								pf_update_env_page(faulted_env,faulted_env->page_last_WS_element->virtual_address,ptr_frame_info);
+		// 								int map_faulted_page = map_frame(faulted_env->env_page_directory,ptr_frame_info,fault_va,PERM_WRITEABLE | PERM_PRESENT | PERM_USER | PERM_MARKED);
+		// 								if(map_faulted_page == E_NO_MEM){
+		// 										panic("No page table found and there's no free frame for creating it.");
+		// 									}
+		// 								int read = pf_read_env_page(faulted_env, (void *) fault_va);
+		// 								if (read == E_PAGE_NOT_EXIST_IN_PF) {
+		// 									if ((fault_va >= USER_HEAP_START && fault_va < USER_HEAP_MAX)
+		// 												|| (fault_va >= USTACKBOTTOM && fault_va < USTACKTOP)) {
 
-												} else {
-													env_exit();
-												}
-												}
-										struct WorkingSetElement* next_element = LIST_NEXT(faulted_env->page_last_WS_element);
-										env_page_ws_invalidate(faulted_env,faulted_env->page_last_WS_element->virtual_address);
-										struct WorkingSetElement*new_element = env_page_ws_list_create_element(faulted_env, fault_va);
-										if (new_element == NULL) {
-												panic("Failed to create a new Working Set element!");
-											}
-										if(next_element != NULL){
-											LIST_INSERT_BEFORE(&(faulted_env->page_WS_list),next_element,new_element);
-										}
-										else{
-											LIST_INSERT_TAIL(&(faulted_env->page_WS_list),new_element);
-										}
-										faulted_env->page_last_WS_element = next_element ? next_element : LIST_FIRST(&(faulted_env->page_WS_list));
-										replaced = 1;
-										break;
-										}
-										}
-										else{
-											faulted_env->page_last_WS_element->sweeps_counter = 0;
-											pt_set_page_permissions(faulted_env->env_page_directory,faulted_env->page_last_WS_element->virtual_address,0,PERM_USED);
-										}
-							}
-							faulted_env->page_last_WS_element = LIST_NEXT(faulted_env->page_last_WS_element) ? LIST_NEXT(faulted_env->page_last_WS_element) : LIST_FIRST(&(faulted_env->page_WS_list));
-						}
-		 }
+		// 										} else {
+		// 											env_exit();
+		// 										}
+		// 										}
+		// 								struct WorkingSetElement* next_element = LIST_NEXT(faulted_env->page_last_WS_element);
+		// 								env_page_ws_invalidate(faulted_env,faulted_env->page_last_WS_element->virtual_address);
+		// 								struct WorkingSetElement*new_element = env_page_ws_list_create_element(faulted_env, fault_va);
+		// 								if (new_element == NULL) {
+		// 										panic("Failed to create a new Working Set element!");
+		// 									}
+		// 								if(next_element != NULL){
+		// 									LIST_INSERT_BEFORE(&(faulted_env->page_WS_list),next_element,new_element);
+		// 								}
+		// 								else{
+		// 									LIST_INSERT_TAIL(&(faulted_env->page_WS_list),new_element);
+		// 								}
+		// 								faulted_env->page_last_WS_element = next_element ? next_element : LIST_FIRST(&(faulted_env->page_WS_list));
+		// 								replaced = 1;
+		// 								break;
+		// 								}
+		// 								}
+		// 								else{
+		// 									faulted_env->page_last_WS_element->sweeps_counter = 0;
+		// 									pt_set_page_permissions(faulted_env->env_page_directory,faulted_env->page_last_WS_element->virtual_address,0,PERM_USED);
+		// 								}
+		// 					}
+		// 					faulted_env->page_last_WS_element = LIST_NEXT(faulted_env->page_last_WS_element) ? LIST_NEXT(faulted_env->page_last_WS_element) : LIST_FIRST(&(faulted_env->page_WS_list));
+		// 				}
+		//  }
 
+		
 	}
+	
 	}
 
 }
