@@ -197,17 +197,17 @@ void fault_handler(struct Trapframe *tf) {
 
 			if ((fault_va >= USER_HEAP_START && fault_va < USER_HEAP_MAX)
 					&& !(validate_perm & PERM_MARKED)) {
-				cprintf(" i exit on environment1\n");
+//				cprintf(" i exit on environment1\n");
 				env_exit();
 			}
 
 			if (fault_va >= USER_LIMIT) {
-				cprintf(" i exit on environment2\n");
+//				cprintf(" i exit on environment2\n");
 				env_exit();
 			}
 			if ((validate_perm & PERM_PRESENT)
 					&& !(validate_perm & PERM_WRITEABLE)) {
-				cprintf(" i exit on environment3\n");
+//				cprintf(" i exit on environment3\n");
 				env_exit();
 			}
 
@@ -283,7 +283,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va) {
 
 		if(wsSize < (faulted_env->page_WS_max_size))
 			{
-				cprintf("PLACEMENT=========================WS Size = %d\n", wsSize );
+//				cprintf("PLACEMENT=========================WS Size = %d\n", wsSize );
 				//TODO: [PROJECT'24.MS2 - #09] [2] FAULT HANDLER I - Placement
 				// Write your code here, remove the panic and write your code
 		//		panic("page_fault_handler().PLACEMENT is not implemented yet...!!");
@@ -320,7 +320,7 @@ void page_fault_handler(struct Env * faulted_env, uint32 fault_va) {
                     }
 
 		    	struct WorkingSetElement*new_element = env_page_ws_list_create_element(faulted_env, fault_va) ;
-		    	cprintf("WorkingSetElement*new_element  ");
+//		    	cprintf("WorkingSetElement*new_element  ");
 		    	if (new_element == NULL) {
 		    	        panic("Failed to create a new Working Set element!");
 		    	    }
