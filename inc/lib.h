@@ -102,6 +102,7 @@ int 	sys_createSharedObject(char* shareName, uint32 size, uint8 isWritable, void
 int 	sys_getSizeOfSharedObject(int32 ownerID, char* shareName);
 int 	sys_getSharedObject(int32 ownerID, char* shareName, void* virtual_address );
 int 	sys_freeSharedObject(int32 sharedObjectID, void *startVA);
+int32      sys_get_shared_id(void* virtual_adress);
 
 //etc...
 uint32	sys_rcr2();
