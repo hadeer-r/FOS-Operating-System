@@ -384,6 +384,9 @@ int sys_getSharedObject(int32 ownerID, char* shareName, void* virtual_address) {
 int sys_freeSharedObject(int32 sharedObjectID, void *startVA) {
 	return freeSharedObject(sharedObjectID, startVA);
 }
+int32 sys_get_shared_id(void* virtual_adress){
+	return getsharedid( (void*)virtual_adress);
+}
 
 /*********************************/
 /* USER ENVIRONMENT SYSTEM CALLS */
@@ -604,7 +607,10 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4,
 	case SYS_free_shared_object:
 		return sys_freeSharedObject((int32) a1, (void *) a2);
 		break;
+        case SYS_get_shared_id:
 
+	       return sys_get_shared_id((void*)a1);
+		break;
 	case SYS_get_size_of_shared_object:
 		return sys_getSizeOfSharedObject((int32) a1, (char*) a2);
 		break;
