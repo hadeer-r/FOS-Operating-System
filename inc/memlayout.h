@@ -153,6 +153,9 @@
 // The location of the user-level STABS data structure
 #define USTABDATA	(PTSIZE / 2)
 
+#define PGFLTEMP (UTEMP - PAGE_SIZE)
+
+
 //2016
 #define KERNEL_HEAP_START 0xF6000000
 #define KERNEL_HEAP_MAX 0xFFFFF000
