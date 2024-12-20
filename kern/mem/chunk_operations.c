@@ -189,19 +189,23 @@ void allocate_user_mem(struct Env* e, uint32 va, uint32 size) {
 // 2) FREE USER MEMORY:
 //=====================================
 void free_user_mem(struct Env* e, uint32 virtual_address, uint32 size) {
-	for (uint32 i = virtual_address; i < virtual_address + size; i +=
-			PAGE_SIZE) {
-		//cprintf("begin free_user_mem");
+	for (uint32 i = virtual_address; i < virtual_address + size; i +=PAGE_SIZE) {
+		cprintf("begin free_user_mem");
 		uint32 *ptr_page_table;
-		int page_table = get_page_table(e->env_page_directory, i,
-				&ptr_page_table);
+		int page_table = get_page_table(e->env_page_directory, i,&ptr_page_table);
 		if (page_table == TABLE_IN_MEMORY) {
-			//cprintf("page_table == TABLE_IN_MEMORY");
+			cprintf("page_table == TABLE_IN_MEMORY");
 			pt_set_page_permissions(e->env_page_directory, i, 0, PERM_MARKED);
 		}
 		pf_remove_env_page(e, i); // Free ALL pages of the given range from the Page File
+        cprintf("1\n");
+		struct WorkingSetElement* ws_element = NULL;
+		ws_element->virtual_address = i;
+		if(e->page_last_WS_element == ws_element){
+			e->page_last_WS_element = LIST_NEXT(ws_element) ? LIST_NEXT(ws_element) : LIST_FIRST(&(e->page_WS_list));
+		}
+		cprintf("2\n");
 		env_page_ws_invalidate(e, i); // Free ONLY pages that are resident in the working set from the memory
-
 	}
 	return;
 
