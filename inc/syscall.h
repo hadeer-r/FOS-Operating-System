@@ -56,6 +56,7 @@ enum {
 	SYS_INTIALIZE_SEM_Q,
 	SYS_MAKE_BLOCKED,
 	SYS_MAKE_READY,
+       SYS_get_shared_id,
 	//=====================================================================
 	NSYSCALLS
 };
