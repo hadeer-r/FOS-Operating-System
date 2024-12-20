@@ -301,4 +301,7 @@ void sys_make_blocked(struct __semdata* data){
 void sys_make_ready(struct __semdata* data) {
 	syscall(SYS_MAKE_READY,(uint32) data, 0, 0, 0, 0);
 }
-
+int32 sys_get_shared_id(void* virtual_address) 
+{
+	return syscall(SYS_get_shared_id,(uint32)virtual_address,0,0,0,0);
+}
