@@ -343,7 +343,7 @@ int freeSharedObject(int32 sharedObjectID, void* startVA) {
 		//COMMENT THE FOLLOWING LINE BEFORE START CODING
 		//panic("freeSharedObject is not implemented yet");
 		//Your Code is Here...
-    if (startVA== NULL) {
+   if (startVA== NULL) {
         //cprintf("Error: freeSharedObject called with NULL virtual address\n");
         return E_SHARED_MEM_NOT_EXISTS;
     }
@@ -366,11 +366,10 @@ int freeSharedObject(int32 sharedObjectID, void* startVA) {
     }
    release_spinlock(&AllShares.shareslock);
 
-    if (current_share== NULL) {
-       
-        return E_SHARED_MEM_NOT_EXISTS;
-    }
-    uint32 refid = 0;
+   if (current_share == NULL || current_share->freeva == NULL) {
+           return E_SHARED_MEM_NOT_EXISTS;
+       }
+    uint32 refid =  -1;
     acquire_spinlock(&AllShares.shareslock);
    for (uint32 i = 0 ; i<=current_share->references;i++){
         		if ((uint32)current_share->freeva[i]== (uint32)startVA)
@@ -380,6 +379,11 @@ int freeSharedObject(int32 sharedObjectID, void* startVA) {
         	        	break ;
         	        }
         	}
+   if (refid == -1)
+   {
+	   cprintf("this virtual address not mapped in this id \n");
+	   return E_SHARED_MEM_NOT_EXISTS;
+   }
    release_spinlock(&AllShares.shareslock);
     uint32* ptr_page_table = NULL;
     int size = getSizeOfSharedObject(current_share->ownerID, current_share->name);
@@ -387,32 +391,33 @@ int freeSharedObject(int32 sharedObjectID, void* startVA) {
     for (uint32 i = va; i < va + size; i += PAGE_SIZE) {
         if (get_page_table(myenv->env_page_directory, i, &ptr_page_table) == TABLE_IN_MEMORY) {
             unmap_frame(myenv->env_page_directory, i);
-            
 
 
+            if (ptr_page_table == NULL) {
+                 cprintf(" ptr_page_table is NULL\n");
+                continue;
+            }
             if (is_table_empty(ptr_page_table)) {
                 pd_clear_page_dir_entry(myenv->env_page_directory, i);
                 kfree(ptr_page_table);
-                
+
             }
         }
     }
     acquire_spinlock(&AllShares.shareslock);
-    for (uint32 i = 0 ; i<current_share->references;i++){
-    	current_share->freeva[i]= (uint32)current_share->freeva[i+1];
-
-           	}
+    for (uint32 i = refid; i < current_share->references - 1; i++) {
+        current_share->freeva[i] = current_share->freeva[i + 1];
+    }
     current_share->references--;
     release_spinlock(&AllShares.shareslock);
-   
 
     if (current_share->references == 0) {
 
         free_share(current_share);
-        
 
 
-    } 
+
+    }
     tlbflush();
 
     return 0;
