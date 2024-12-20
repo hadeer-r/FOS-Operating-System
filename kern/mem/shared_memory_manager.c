@@ -1,4 +1,5 @@
 
+
 #include <inc/memlayout.h>
 #include "shared_memory_manager.h"
 
@@ -306,32 +307,34 @@ void free_share(struct Share* ptrShare) {
             return ;
         }
 
-        acquire_spinlock(&AllShares.shareslock);
-        LIST_REMOVE(&AllShares.shares_list, ptrShare);
-        release_spinlock(&AllShares.shareslock);
+       // cprintf("-----bla 1--------");
     if (ptrShare->framesStorage!= NULL) {
-    	unmap_frame(myenv->env_page_directory,(uint32)ptrShare->framesStorage);
-        /*for (uint32 i = 0; i < ptrShare->n_frames; i++) {
-        	struct frameInfo ** frame = &ptrShare->framesStorage ;
-            if (frame &&frame->references == 0) {
-              free_frame(frame);
-            } else
-            {
-                cprintf("Frame %d still has %d references. Not freed.\n",
-                        i, frame->references);
-            }
-        }*/
+    	 //cprintf("-----d5l--------");
+
+    	// cprintf("-----blabla1--------");
+    	 for (uint32 i = 0 ; i< ptrShare->n_frames ; i++)
+    	 {
+    		 ptrShare->framesStorage[i]= NULL;
+    		 unmap_frame(myenv->env_page_directory,(uint32)ptrShare->framesStorage[i]);
+    		 //free_frame(ptrShare->framesStorage[i]);
+    	 }
+    	// cprintf("-----d5l --------");
+
+    	// unmap_frame(myenv->env_page_directory,(uint32)ptrShare->framesStorage);
+         //cprintf("-----d5l 2--------");
     	acquire_spinlock(&MemFrameLists.mfllock);
         kfree(ptrShare->framesStorage);
         release_spinlock(&MemFrameLists.mfllock);
         //cprintf("free_share: Freed framesStorage array\n");
-    } else {
-       // cprintf("free_share: framesStorage is NULL. No frames to deallocate.\n");
-    }
-
+    } //cprintf("-----bla 2--------");
+    acquire_spinlock(&AllShares.shareslock);
+            LIST_REMOVE(&AllShares.shares_list, ptrShare);
+            release_spinlock(&AllShares.shareslock);
+            //cprintf("-----3ml remove--------");
     acquire_spinlock(&MemFrameLists.mfllock);
     kfree(ptrShare);
     release_spinlock(&MemFrameLists.mfllock);
+    //cprintf("----- a5r--------");
    // cprintf("free_share: Completed share deallocation\n");
 }
 //========================
@@ -347,16 +350,16 @@ int freeSharedObject(int32 sharedObjectID, void* startVA) {
         //cprintf("Error: freeSharedObject called with NULL virtual address\n");
         return E_SHARED_MEM_NOT_EXISTS;
     }
-
+//cprintf("----------1------\n");
     struct Env* myenv = get_cpu_proc();
     if (myenv==NULL) {
         //cprintf("Error: Calling environment is NULL\n");
         return E_SHARED_MEM_NOT_EXISTS;
     }
 
-
+   // cprintf("----------3------\n");
     uint32 va = ROUNDDOWN((uint32)startVA, PAGE_SIZE);
-
+   // cprintf("----------4------\n");
     struct Share* current_share = NULL;
     acquire_spinlock(&AllShares.shareslock);
     LIST_FOREACH(current_share, &AllShares.shares_list) {
@@ -365,10 +368,11 @@ int freeSharedObject(int32 sharedObjectID, void* startVA) {
         }
     }
    release_spinlock(&AllShares.shareslock);
-
+   //cprintf("----------4------\n");
    if (current_share == NULL || current_share->freeva == NULL) {
            return E_SHARED_MEM_NOT_EXISTS;
        }
+   //cprintf("----------5------\n");
     uint32 refid =  -1;
     acquire_spinlock(&AllShares.shareslock);
    for (uint32 i = 0 ; i<=current_share->references;i++){
@@ -385,46 +389,72 @@ int freeSharedObject(int32 sharedObjectID, void* startVA) {
 	   return E_SHARED_MEM_NOT_EXISTS;
    }
    release_spinlock(&AllShares.shareslock);
+   //cprintf("----------6------\n");
     uint32* ptr_page_table = NULL;
     int size = getSizeOfSharedObject(current_share->ownerID, current_share->name);
-
+    //cprintf("----------7------\n");
     for (uint32 i = va; i < va + size; i += PAGE_SIZE) {
+    	//cprintf("----------1------\n");
         if (get_page_table(myenv->env_page_directory, i, &ptr_page_table) == TABLE_IN_MEMORY) {
             unmap_frame(myenv->env_page_directory, i);
-
+            //cprintf("----------2------\n");
 
             if (ptr_page_table == NULL) {
                  cprintf(" ptr_page_table is NULL\n");
                 continue;
             }
-            if (is_table_empty(ptr_page_table)) {
+            //cprintf("----------3------\n");
+            if (pd_is_table_used(myenv->env_page_directory, i)==1)
+            {
+            	//cprintf("----------4------\n");
+            if (ptr_page_table != NULL &&is_table_empty(ptr_page_table)==1) {
+            	//cprintf("----------5------\n");
+            	pd_set_table_unused(myenv->env_page_directory, i);
+            	//cprintf("----------6------\n");
                 pd_clear_page_dir_entry(myenv->env_page_directory, i);
-                kfree(ptr_page_table);
+                //cprintf("----------7------\n");
+                acquire_spinlock(&MemFrameLists.mfllock);
+                    kfree(ptr_page_table);
+                    release_spinlock(&MemFrameLists.mfllock);
+                    //cprintf("----------8------\n");
 
             }
+            }else
+            {
+            	if (ptr_page_table != NULL &&is_table_empty(ptr_page_table)==1) {
+            		pd_clear_page_dir_entry(myenv->env_page_directory, i);
+            		                //cprintf("----------else7------\n");
+            		                acquire_spinlock(&MemFrameLists.mfllock);
+            		                    kfree(ptr_page_table);
+            		                    release_spinlock(&MemFrameLists.mfllock);
+            		                   // cprintf("----------else8------\n");
+            	}
+            }
         }
-    }
+    }//cprintf("----------88------\n");
+    uint32 loll = 1 ;
     acquire_spinlock(&AllShares.shareslock);
-    for (uint32 i = refid; i < current_share->references - 1; i++) {
-        current_share->freeva[i] = current_share->freeva[i + 1];
+    for (uint32 i = refid; i < ((current_share->references) - loll); i++) {
+        current_share->freeva[i] = current_share->freeva[i + loll];
     }
     current_share->references--;
     release_spinlock(&AllShares.shareslock);
-
+    //cprintf("----------9------\n");
     if (current_share->references == 0) {
-
+    	//cprintf("----------10------\n");
         free_share(current_share);
 
 
 
     }
+    //cprintf("----------11------\n");
     tlbflush();
-
+  //  cprintf("----------12------\n");
     return 0;
 }
 
 int32 getsharedid(void* virtual_address) {
-    
+
 
     struct Env* myenv = get_cpu_proc();
     if (myenv== NULL) {
