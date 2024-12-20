@@ -221,7 +221,19 @@ void* sget(int32 ownerEnvID, char *sharedVarName) {
 void sfree(void* virtual_address) {
 //TODO: [PROJECT'24.MS2 - BONUS#4] [4] SHARED MEMORY [USER SIDE] - sfree()
 // Write your code here, remove the panic and write your code
-	panic("sfree() is not implemented yet...!!");
+	//panic("sfree() is not implemented yet...!!");
+	  int32 shared_id = sys_get_shared_id(virtual_address);
+    if (shared_id == E_SHARED_MEM_NOT_EXISTS) {
+       cprintf("No shared memory exists at the given virtual address.\n");
+
+    }
+    else
+    {
+    int result = sys_freeSharedObject(shared_id, virtual_address);
+    if (result != 0) {
+        cprintf("Failed to free shared memory object.\n");
+    }
+    }
 }
 
 //=================================
