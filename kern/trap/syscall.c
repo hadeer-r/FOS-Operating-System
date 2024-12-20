@@ -264,6 +264,12 @@ void sys_clearFFL() {
 	release_spinlock(&MemFrameLists.mfllock);
 }
 
+//------------sched_RR
+void sys_env_set_priority(int32 envID, int priority)
+{
+	env_set_priority(envID,priority);
+}
+
 /*******************************/
 /* PAGE FILE SYSTEM CALLS */
 /*******************************/
@@ -501,6 +507,10 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4,
 	switch (syscallno) {
 //TODO: [PROJECT'24.MS1 - #02] [2] SYSTEM CALLS - Add suitable code here
 //  MS1
+	case SYS_env_set_priority:
+			sys_env_set_priority(a1,a2);
+			return 0;
+			break;//(int32 envID, int priority)
 	case SYS_Sbrk:
 		return (uint32) sys_sbrk((int) a1);
 		break;

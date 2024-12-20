@@ -297,4 +297,6 @@ void sys_make_blocked(struct __semdata* data){
 void sys_make_ready(struct __semdata* data) {
 	syscall(SYS_MAKE_READY,(uint32) data, 0, 0, 0, 0);
 }
-
+void sys_env_set_priority(int32 envID, int priority){
+	syscall(SYS_env_set_priority, envID,priority,0,0,0 );
+}

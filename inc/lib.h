@@ -83,6 +83,9 @@ void 	sys_set_uheap_strategy(uint32 heapStrategy);
 //Page File
 int 	sys_pf_calculate_allocated_pages(void);
 
+// shced_RR
+void sys_env_set_priority(int32 envID, int priority);
+
 //Semaphores
 void sys_intialize_sem_q(struct __semdata* data);
 void sys_make_blocked(struct __semdata* data);

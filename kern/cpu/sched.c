@@ -98,7 +98,7 @@ fos_scheduler(void)
 
 			if(next_env != NULL)
 			{
-				//cprintf("\nScheduler select program '%s' [%d]... clock counter = %d\n", next_env->prog_name, next_env->env_id, kclock_read_cnt0());
+//				cprintf("\nScheduler select program '%s' [%d]... clock counter = %d\n", next_env->prog_name, next_env->env_id,kclock_read_cnt0());
 
 				/*2024: Replaced by context_switch()*/
 				//env_run(next_env);
@@ -249,16 +249,25 @@ void sched_init_PRIRR(uint8 numOfPriorities, uint8 quantum, uint32 starvThresh)
 	//TODO: [PROJECT'24.MS3 - #07] [3] PRIORITY RR Scheduler - sched_init_PRIRR
 	//Your code is here
 	//Comment the following line
-	panic("Not implemented yet");
+//	panic("Not implemented yet");
+//	cprintf("number of priorities is %d\n",numOfPriorities);
+	sched_set_starv_thresh(starvThresh);
+	num_of_ready_queues=numOfPriorities;
+	ProcessQueues.env_ready_queues = kmalloc(num_of_ready_queues*sizeof(struct Env_Queue));
+	quantums = kmalloc(num_of_ready_queues * sizeof(uint8)) ;
+
+	quantums[0]=quantum;
 
 
+	for(int i=0;i<numOfPriorities;i++){
+		init_queue(&ProcessQueues.env_ready_queues[i]);
+	}
 
 
+	init_queue(&ProcessQueues.env_new_queue);
+	init_queue(&ProcessQueues.env_exit_queue);
 
-
-
-
-
+//	init_spinlock(&ProcessQueues.qlock, "process queues lock");
 	//=========================================
 	//DON'T CHANGE THESE LINES=================
 	uint16 cnt0 = kclock_read_cnt0_latch() ; //read after write to ensure it's set to the desired value
@@ -350,7 +359,31 @@ struct Env* fos_scheduler_PRIRR()
 	//TODO: [PROJECT'24.MS3 - #08] [3] PRIORITY RR Scheduler - fos_scheduler_PRIRR
 	//Your code is here
 	//Comment the following line
-	panic("Not implemented yet");
+	struct Env *nextEnv = NULL;
+	struct Env *cur_proc_cpu = get_cpu_proc();
+	if(cur_proc_cpu!=NULL){
+//		acquire_spinlock(&ProcessQueues.qlock);
+
+		cur_proc_cpu->tck_env=timer_ticks();
+		sched_insert_ready(cur_proc_cpu);
+
+//		release_spinlock(&ProcessQueues.qlock);
+	}
+
+	for(int i=0;i<num_of_ready_queues;i++){
+
+		if(queue_size(&ProcessQueues.env_ready_queues[i])==0){
+			continue;
+		}
+		nextEnv=dequeue(&ProcessQueues.env_ready_queues[i]);
+
+		break;
+	}
+//	cprintf("trap after getting next env and for loop\n");
+	kclock_set_quantum(quantums[0]);
+	return nextEnv;
+
+//	panic("Not implemented yet");
 }
 
 //========================================
@@ -361,13 +394,53 @@ void clock_interrupt_handler(struct Trapframe* tf)
 {
 	if (isSchedMethodPRIRR())
 	{
+
 		//TODO: [PROJECT'24.MS3 - #09] [3] PRIORITY RR Scheduler - clock_interrupt_handler
 		//Your code is here
+		acquire_spinlock(&ProcessQueues.qlock);
+		struct Env* cur = get_cpu_proc();
+
+		int num_prio=num_of_ready_queues;
+		int test_loop=0;
+		for(int i=0;i<num_prio;i++){
+			struct Env* tmp;
+			LIST_FOREACH(tmp,&ProcessQueues.env_ready_queues[i]){
+				tmp->tck_env++;
+
+			}
+
+
+		}
+		for(int i=num_prio-1;i>0;i--){
+			if(queue_size(&ProcessQueues.env_ready_queues[i])==0){
+								continue;
+			}
+			while(queue_size(&ProcessQueues.env_ready_queues[i])!=0){
+				struct Env* tmp=LIST_LAST(&ProcessQueues.env_ready_queues[i]);
+				if(tmp->tck_env >= max_threshold){
+					struct Env* to_insert = dequeue(&ProcessQueues.env_ready_queues[i]);
+					to_insert->priority--;
+					sched_insert_ready(to_insert);
+				}
+				else {
+					break;
+				}
+
+
+			}
+
+
+		}
+
+
+		release_spinlock(&ProcessQueues.qlock);
 		//Comment the following line
-		panic("Not implemented yet");
+//		panic("Not implemented yet clock interrupt handler");
+//		cprintf("clock done\n");
 	}
 
 
+//	cprintf("\n");
 
 	/********DON'T CHANGE THESE LINES***********/
 	ticks++ ;

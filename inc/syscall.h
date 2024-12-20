@@ -55,6 +55,7 @@ enum {
 	SYS_INTIALIZE_SEM_Q,
 	SYS_MAKE_BLOCKED,
 	SYS_MAKE_READY,
+	SYS_env_set_priority,
 	//=====================================================================
 	NSYSCALLS
 };
