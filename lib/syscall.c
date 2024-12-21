@@ -280,6 +280,10 @@ void sys_free_user_mem(uint32 virtual_address, uint32 size) {
 	//Comment the following line before start coding...
 //	panic("not implemented yet");
 }
+// sched set priority
+void sys_env_set_priority(int32 envID, int priority){
+	syscall(SYS_env_set_priority, envID,priority,0,0,0 );
+}
 
 void sys_allocate_user_mem(uint32 virtual_address, uint32 size) {
 	syscall(SYS_Allocate_User_Mem, virtual_address, size, 0, 0, 0);
@@ -297,6 +301,7 @@ void sys_make_blocked(struct __semdata* data){
 void sys_make_ready(struct __semdata* data) {
 	syscall(SYS_MAKE_READY,(uint32) data, 0, 0, 0, 0);
 }
-void sys_env_set_priority(int32 envID, int priority){
-	syscall(SYS_env_set_priority, envID,priority,0,0,0 );
+int32 sys_get_shared_id(void* virtual_address)
+{
+	return syscall(SYS_get_shared_id,(uint32)virtual_address,0,0,0,0);
 }

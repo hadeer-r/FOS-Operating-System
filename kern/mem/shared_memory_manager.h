@@ -28,7 +28,7 @@ struct Share
 	uint32 references;
 	//sharing permissions (0: ReadOnly, 1:Writable)
 	uint8 isWritable;
-
+	uint32  freeva[100];
 	//to store frames to be shared
 	struct FrameInfo** framesStorage;
 	uint32 n_frames;
@@ -59,5 +59,6 @@ int getSizeOfSharedObject(int32 ownerID, char* shareName);
 int getSharedObject(int32 ownerID, char* shareName, void* virtual_address);
 int freeSharedObject(int32 sharedObjectID, void *startVA);
 
+int32 getsharedid(void* virtual_address);
 
 #endif /* FOS_SHARED_MEMORY_MANAGER_H */

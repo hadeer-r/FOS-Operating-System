@@ -56,6 +56,7 @@ enum {
 	SYS_MAKE_BLOCKED,
 	SYS_MAKE_READY,
 	SYS_env_set_priority,
+	SYS_get_shared_id,
 	//=====================================================================
 	NSYSCALLS
 };

@@ -83,19 +83,26 @@ void 	sys_set_uheap_strategy(uint32 heapStrategy);
 //Page File
 int 	sys_pf_calculate_allocated_pages(void);
 
-// shced_RR
-void sys_env_set_priority(int32 envID, int priority);
-
 //Semaphores
+
 void sys_intialize_sem_q(struct __semdata* data);
 void sys_make_blocked(struct __semdata* data);
 void sys_make_ready(struct __semdata* data);
+
+
+
+// shced_RR
+void sys_env_set_priority(int32 envID, int priority);
+
+
+
 //Sharing
 //2017
 int 	sys_createSharedObject(char* shareName, uint32 size, uint8 isWritable, void* virtual_address);
 int 	sys_getSizeOfSharedObject(int32 ownerID, char* shareName);
 int 	sys_getSharedObject(int32 ownerID, char* shareName, void* virtual_address );
 int 	sys_freeSharedObject(int32 sharedObjectID, void *startVA);
+int32      sys_get_shared_id(void* virtual_adress);
 
 //etc...
 uint32	sys_rcr2();

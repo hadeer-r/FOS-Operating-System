@@ -264,12 +264,6 @@ void sys_clearFFL() {
 	release_spinlock(&MemFrameLists.mfllock);
 }
 
-//------------sched_RR
-void sys_env_set_priority(int32 envID, int priority)
-{
-	env_set_priority(envID,priority);
-}
-
 /*******************************/
 /* PAGE FILE SYSTEM CALLS */
 /*******************************/
@@ -390,6 +384,9 @@ int sys_getSharedObject(int32 ownerID, char* shareName, void* virtual_address) {
 int sys_freeSharedObject(int32 sharedObjectID, void *startVA) {
 	return freeSharedObject(sharedObjectID, startVA);
 }
+int32 sys_get_shared_id(void* virtual_adress){
+	return getsharedid( (void*)virtual_adress);
+}
 
 /*********************************/
 /* USER ENVIRONMENT SYSTEM CALLS */
@@ -492,6 +489,14 @@ void sys_bypassPageFault(uint8 instrLength) {
 	bypassInstrLength = instrLength;
 }
 
+
+
+//------------sched_RR
+void sys_env_set_priority(int32 envID, int priority)
+{
+	env_set_priority(envID,priority);
+}
+
 /**************************************************************************/
 /************************* SYSTEM CALLS HANDLER ***************************/
 /**************************************************************************/
@@ -505,12 +510,13 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4,
 // Call the function corresponding to the 'syscallno' parameter.
 // Return any appropriate return value.
 	switch (syscallno) {
-//TODO: [PROJECT'24.MS1 - #02] [2] SYSTEM CALLS - Add suitable code here
-//  MS1
+
+	//TODO: [PROJECT'24.MS1 - #02] [2] SYSTEM CALLS - Add suitable code here
+	//  MS1
 	case SYS_env_set_priority:
-			sys_env_set_priority(a1,a2);
-			return 0;
-			break;//(int32 envID, int priority)
+		sys_env_set_priority(a1,a2);
+		return 0;
+		break;//(int32 envID, int priority)
 	case SYS_Sbrk:
 		return (uint32) sys_sbrk((int) a1);
 		break;
@@ -601,7 +607,10 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4,
 	case SYS_free_shared_object:
 		return sys_freeSharedObject((int32) a1, (void *) a2);
 		break;
+        case SYS_get_shared_id:
 
+	       return sys_get_shared_id((void*)a1);
+		break;
 	case SYS_get_size_of_shared_object:
 		return sys_getSizeOfSharedObject((int32) a1, (char*) a2);
 		break;
@@ -705,4 +714,3 @@ uint32 syscall(uint32 syscallno, uint32 a1, uint32 a2, uint32 a3, uint32 a4,
 //panic("syscall not implemented");
 	return -E_INVAL;
 }
-
