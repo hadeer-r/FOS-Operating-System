@@ -111,45 +111,39 @@ void* smalloc(char *sharedVarName, uint32 size, uint8 isWritable)
 	if(size<PAGE_SIZE){
 		size=PAGE_SIZE;
 	}
-	size = ROUNDUP(size, PAGE_SIZE);
-		uint32 needed_pages = size / PAGE_SIZE;
+			size = ROUNDUP(size, PAGE_SIZE);
+			uint32 needed_pages = size / PAGE_SIZE;
 
-		uint32 seq = 0, count = 0, va;
-		uint32 start_page = myEnv->u_limit + PAGE_SIZE;
-		for (uint32 i = start_page; i < USER_HEAP_MAX; i += PAGE_SIZE) {
-			uint32 x = (i - start_page) / PAGE_SIZE;
-			if (marked[x]) {
-				count = 0;
-			} else {
-				if (!count)
-					va = i;
-				count++;
-			}
-			if (count >= needed_pages)
-				break;
-		}
-
-		if (count >= needed_pages) {
-			uint32 y = (va - start_page) / PAGE_SIZE;
-			is_start[y] = 1;
-			marked[y] = 1;
-
-			for (uint32 i = y; i < y + needed_pages; i++) {
-				marked[i] = 1;
+			uint32 count = 0, va;
+			uint32 start_page = myEnv->u_limit + PAGE_SIZE;
+			for (uint32 i = start_page; i < USER_HEAP_MAX; i += PAGE_SIZE) {
+				uint32 x = (i - start_page) / PAGE_SIZE;
+				if (marked[x]) {
+					count = 0;
+				} else {
+					if (!count)
+						va = i;
+					count++;
+				}
+				if (count >= needed_pages)
+					break;
 			}
 
-			int x=sys_createSharedObject(sharedVarName,size,isWritable,(void*)va);
-			if (x ==E_NO_SHARE || x==E_SHARED_MEM_EXISTS )
-			{
-				return NULL;
-			}
-			else
-			{
-				return (void *)va;
-			}
+			if (count >= needed_pages) {
+				uint32 y = (va - start_page) / PAGE_SIZE;
+				is_start[y] = 1;
 
-
-		}
+				for (uint32 i = y; i < y + needed_pages; i++) {
+					marked[i] = 1;
+				}
+				//(char* shareName, uint32 size, uint8 isWritable,void* virtual_address)
+				int x = sys_createSharedObject(sharedVarName, size,isWritable,(void*)va);
+				if (x ==E_NO_SHARE || x==E_SHARED_MEM_EXISTS )
+				{
+					return NULL;
+				}
+				return (void *) va;
+			}
 
 	return NULL;
 }
@@ -162,13 +156,12 @@ void* sget(int32 ownerEnvID, char *sharedVarName)
 	//TODO: [PROJECT'24.MS2 - #20] [4] SHARED MEMORY [USER SIDE] - sget()
 	// Write your code here, remove the panic and write your code
 //	panic("sget() is not implemented yet...!!");
+
 	int size = sys_getSizeOfSharedObject(ownerEnvID,
 				sharedVarName);
+	if (size <= 0||size == E_SHARED_MEM_NOT_EXISTS)
+		return NULL;
 
-
-	if(size<PAGE_SIZE){
-		size=PAGE_SIZE;
-	}
 	size = ROUNDUP(size, PAGE_SIZE);
 		uint32 needed_pages = size / PAGE_SIZE;
 
