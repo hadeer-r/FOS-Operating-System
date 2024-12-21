@@ -306,10 +306,7 @@ void free_share(struct Share* ptrShare) {
             //cprintf("Error: Calling environment is NULL\n");
             return ;
         }
-	acquire_spinlock(&AllShares.shareslock);
-       LIST_REMOVE(&AllShares.shares_list,ptrShare);
-       release_spinlock(&AllShares.shareslock);
-
+	
        acquire_spinlock(&AllShares.shareslock);
        LIST_REMOVE(&AllShares.shares_list,ptrShare);
        release_spinlock(&AllShares.shareslock);
@@ -334,9 +331,7 @@ void free_share(struct Share* ptrShare) {
         release_spinlock(&MemFrameLists.mfllock);
         //cprintf("free_share: Freed framesStorage array\n");
     } //cprintf("-----bla 2--------");
-    acquire_spinlock(&AllShares.shareslock);
-            LIST_REMOVE(&AllShares.shares_list, ptrShare);
-            release_spinlock(&AllShares.shareslock);
+   
             //cprintf("-----3ml remove--------");
     acquire_spinlock(&MemFrameLists.mfllock);
     kfree(ptrShare);
