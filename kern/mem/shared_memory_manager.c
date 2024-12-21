@@ -214,7 +214,7 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size, uint8 isWrit
 	    LIST_INSERT_TAIL(&AllShares.shares_list, newShare);
 	    release_spinlock(&AllShares.shareslock);
 
-	    cprintf("id : %d \n",newShare->ID);
+	    //cprintf("id : %d \n",newShare->ID);
 
 	    return newShare->ID;
 
