@@ -108,10 +108,8 @@ uint32 allocatesize[totalpages];
 void* kmalloc(unsigned int size) {
 	unsigned int upsize = ROUNDUP(size, PAGE_SIZE); //3shan page size
 	unsigned int numpages = upsize / PAGE_SIZE;
-	acquire_spinlock(&MemFrameLists.mfllock);
 	//cprintf("================== test block allocator range=================");
 	if (size <= DYN_ALLOC_MAX_BLOCK_SIZE) {
-		release_spinlock(&MemFrameLists.mfllock);
 		return alloc_block_FF(size);
 	}
 //cprintf ("======================test page allocator ===========")
@@ -121,7 +119,6 @@ void* kmalloc(unsigned int size) {
 	uint32 FS = 0; //awel el  free space
 	unsigned int consecutivePages = 0;
 	if (numpages > LIST_SIZE(&MemFrameLists.free_frame_list)) {
-		release_spinlock(&MemFrameLists.mfllock);
 		return NULL;
 	}
 	while (curr < endadd) {
@@ -168,13 +165,13 @@ void* kmalloc(unsigned int size) {
 
 			frame_array[Allocation_count].virtual_adress = (void*) FS;
 			Allocation_count++;
-			release_spinlock(&MemFrameLists.mfllock);
+
 			return (void*) FS;
 		}
 
 		curr += PAGE_SIZE;
 	}
-	release_spinlock(&MemFrameLists.mfllock);
+
 	return NULL;
 }
 
@@ -184,9 +181,9 @@ void kfree(void* virtual_address) {
 	//panic("kfree() is not implemented yet...!!");
 
 	uint32 va = (uint32) virtual_address;
-	acquire_spinlock(&MemFrameLists.mfllock);
+
 	if (va >= start && va < seg_break) {
-		release_spinlock(&MemFrameLists.mfllock);
+
 		return free_block(virtual_address);
 
 	}
@@ -221,11 +218,9 @@ void kfree(void* virtual_address) {
 			}
 
 		}
-		release_spinlock(&MemFrameLists.mfllock);
 	}
 
 	else {
-		release_spinlock(&MemFrameLists.mfllock);
 		panic("Invalid virtual address");
 	}
 

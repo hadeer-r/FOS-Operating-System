@@ -74,9 +74,9 @@ inline struct FrameInfo** create_frames_storage(int numOfFrames)
 		return NULL;
 	}
 	//cprintf("\n---->start calling kmalloc in create frame storage\n");
-//	acquire_spinlock(&MemFrameLists.mfllock);
+	acquire_spinlock(&MemFrameLists.mfllock);
 	struct FrameInfo** storage_array = kmalloc(numOfFrames*sizeof(struct  FrameInfo* ));
-//	release_spinlock(&MemFrameLists.mfllock);
+	release_spinlock(&MemFrameLists.mfllock);
 
 	    if (storage_array == NULL) {
 	        return NULL;
@@ -104,9 +104,9 @@ struct Share* create_share(int32 ownerID, char* shareName, uint32 size, uint8 is
 	//panic("create_share is not implemented yet");
 	//Your Code is Here...
 	//cprintf("\n---->start calling kmalloc in create share\n");
-//	acquire_spinlock(&MemFrameLists.mfllock);
+	acquire_spinlock(&MemFrameLists.mfllock);
 	struct Share* sharedObj = kmalloc(sizeof(struct Share));
-//	release_spinlock(&MemFrameLists.mfllock);
+	release_spinlock(&MemFrameLists.mfllock);
 	uint32 num_pages = ROUNDUP(size, PAGE_SIZE) / PAGE_SIZE;
 	//cprintf("\n---->end calling kmalloc in create share\n");
 
