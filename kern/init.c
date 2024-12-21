@@ -81,9 +81,10 @@ void FOS_initialize()
 		initialize_kheap_dynamic_allocator(KERNEL_HEAP_START, PAGE_SIZE, KERNEL_HEAP_START + DYN_ALLOC_MAX_SIZE);
 #endif
 		//	page_check();
-		//setPageReplacmentAlgorithmNchanceCLOCK();
+
 		//setPageReplacmentAlgorithmLRU(PG_REP_LRU_TIME_APPROX);
 		setPageReplacmentAlgorithmFIFO();
+		setPageReplacmentAlgorithmNchanceCLOCK(5);
 		//setPageReplacmentAlgorithmLRU(PG_REP_LRU_LISTS_APPROX);
 
 		setUHeapPlacementStrategyFIRSTFIT();
@@ -143,7 +144,6 @@ void FOS_initialize()
 		cprintf("*	old SP = %x - updated SP = %x\n", old_sp, read_esp());
 	}
 	cprintf("********************************************************************\n");
-
 	// start the kernel command prompt.
 	autograde = 0;
 	while (1==1)
@@ -152,6 +152,7 @@ void FOS_initialize()
 		cprintf("Type 'help' for a list of commands.\n");
 		get_into_prompt();
 	}
+
 }
 
 

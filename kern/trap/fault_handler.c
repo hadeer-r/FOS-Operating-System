@@ -207,7 +207,7 @@ void fault_handler(struct Trapframe *tf) {
 			}
 			if ((validate_perm & PERM_PRESENT)
 					&& !(validate_perm & PERM_WRITEABLE)) {
-				cprintf(" i exit on environment3\n");
+//				cprintf(" i exit on environment3\n");
 				env_exit();
 			}
 

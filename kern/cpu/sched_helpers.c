@@ -267,7 +267,7 @@ void sched_new_env(struct Env* e)
 	}
 
 	release_spinlock(&(ProcessQueues.qlock)); 	//CS on Qs
-	cprintf("locked is released--------\n");
+//	cprintf("locked is released--------\n");
 	  //cprintf("\n[SCHED_NEW_ENV] release: lock status after = %d\n", qlock.locked);
 }
 
