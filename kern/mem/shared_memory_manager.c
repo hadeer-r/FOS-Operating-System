@@ -214,7 +214,7 @@ int createSharedObject(int32 ownerID, char* shareName, uint32 size, uint8 isWrit
 	    LIST_INSERT_TAIL(&AllShares.shares_list, newShare);
 	    release_spinlock(&AllShares.shareslock);
 
-	    cprintf("id : %d \n",newShare->ID);
+	    //cprintf("id : %d \n",newShare->ID);
 
 	    return newShare->ID;
 
@@ -306,6 +306,9 @@ void free_share(struct Share* ptrShare) {
             //cprintf("Error: Calling environment is NULL\n");
             return ;
         }
+	acquire_spinlock(&AllShares.shareslock);
+       LIST_REMOVE(&AllShares.shares_list,ptrShare);
+       release_spinlock(&AllShares.shareslock);
 
        acquire_spinlock(&AllShares.shareslock);
        LIST_REMOVE(&AllShares.shares_list,ptrShare);
